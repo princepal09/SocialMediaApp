@@ -6,6 +6,7 @@ export interface IUser extends Document {
   posts: Types.ObjectId[];
   bio: string;
   profileImage: string;
+  refreshToken?: string
   password: string;
 
   createdAt: Date;

@@ -25,5 +25,5 @@
     "verbatimModuleSyntax": false,
     "moduleDetection": "force"
   },
-  "include": ["src"]
+  "include": ["src", "types"]
 }

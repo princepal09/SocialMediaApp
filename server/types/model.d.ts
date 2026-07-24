@@ -24,7 +24,7 @@ export interface IPost extends Document {
   content: string;
   image?: string;
   owner: Types.ObjectId;
-
+  comments : Types.ObjectID[]
   createdAt: Date;
   updatedAt: Date;
 }

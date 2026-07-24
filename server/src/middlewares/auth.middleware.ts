@@ -4,7 +4,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "process";
 import { User } from "../models/user.model.js";
 
-interface MyJwtPayload extends JwtPayload {
+export interface MyJwtPayload extends JwtPayload {
   _id: string;
 }
 

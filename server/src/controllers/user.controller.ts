@@ -3,7 +3,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
-import { userInfo } from "os";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -80,8 +79,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .cookie("accessToken", accessToken)
-      .cookie("refreshToken", refreshToken)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json(
         new ApiResponse(
           201,
@@ -96,6 +95,69 @@ export const registerUser = async (req: Request, res: Response) => {
       );
   } catch (err: any) {
     console.error("ERROR", err);
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};
+
+export const loginUser = async (req: Request, res: Response) => {
+  try {
+    const { username, email, password } = req.body;
+    console.log(password)
+    if (!username && !email) {
+      throw new ApiError(400, "Username or email is required");
+    }
+
+    if (!password) {
+      throw new ApiError(400, "Password required");
+    }
+
+    const user = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not exists, Please SignUp First");
+    }
+
+    const isPwdValid = user.isPasswordCorrect(password);
+    if (!isPwdValid) {
+      throw new ApiError(401, "Password is not valid");
+    }
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+    };
+
+
+    const loggedInUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    return res
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+          },
+          "Login Successfully"
+        )
+      );
+  } catch (err: any) {
     return res
       .status(500)
       .json(new ApiError(500, "Internal Server Error", err));

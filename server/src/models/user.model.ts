@@ -3,15 +3,15 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { IUser } from "../../types/model.js";
 import { env } from "../constants.js";
-import type {StringValue} from 'ms';
+import type { StringValue } from "ms";
 
 const userSchema = new mongoose.Schema<IUser>(
   {
     username: {
       type: String,
       required: true,
-      index : true,
-      unique : true,
+      index: true,
+      unique: true,
       trim: true,
       minlength: 3,
       maxlength: 30,
@@ -39,15 +39,26 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       required: true,
     },
-    refreshToken : {
-      type : String,
-      select : false
+    refreshToken: {
+      type: String,
+      select: false,
     },
     password: {
       type: String,
       required: true,
-      select: false,
     },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,
@@ -75,7 +86,7 @@ userSchema.methods.generateAccessToken = function () {
     },
     env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn:env.ACCESS_TOKEN_EXPIRY as StringValue
+      expiresIn: env.ACCESS_TOKEN_EXPIRY as StringValue,
     }
   );
 };
@@ -89,10 +100,9 @@ userSchema.methods.generateRefreshToken = function () {
     },
     env.REFRESH_TOKEN_SECRET,
     {
-      expiresIn:env.REFRESH_TOKEN_EXPIRY as StringValue
+      expiresIn: env.REFRESH_TOKEN_EXPIRY as StringValue,
     }
   );
 };
-
 
 export const User = mongoose.model<IUser>("User", userSchema);

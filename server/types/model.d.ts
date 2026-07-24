@@ -4,6 +4,8 @@ export interface IUser extends Document {
   username: string;
   email: string;
   posts: Types.ObjectId[];
+  followers : Types.ObjectId[],
+  following: Types.ObjectId[],
   bio: string;
   profileImage: string;
   refreshToken?: string

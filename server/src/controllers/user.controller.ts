@@ -123,7 +123,7 @@ export const loginUser = async (req: Request, res: Response) => {
       throw new ApiError(404, "User not exists, Please SignUp First");
     }
 
-    const isPwdValid = user.isPasswordCorrect(password);
+    const isPwdValid = await user.isPasswordCorrect(password);
     if (!isPwdValid) {
       throw new ApiError(401, "Password is not valid");
     }
@@ -262,6 +262,43 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     return res.status(200).json(new ApiResponse(200, user, "CURRENT USER"));
   } catch (err: any) {
     console.log("ERROR WHILE Get current User", err);
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};
+
+export const changeCurrentPassword = async (req: Request, res: Response) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      throw new ApiError(400, "All passwords are required");
+    }
+
+    if (confirmPassword !== newPassword) {
+      throw new ApiError(401, "New password and confirm password do not match");
+    }
+
+    const userId = req.user?._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(401, "Unauthorized access");
+    }
+
+    const isPasswordMatch = await user.isPasswordCorrect(oldPassword);
+    if (!isPasswordMatch) {
+      throw new ApiError(401, "Password is not matching");
+    }
+
+    user.password = confirmPassword;
+    await user.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Password changed successfully!!"));
+  } catch (err: any) {
+    console.log("ERROR WHILE Changing the password", err);
     return res
       .status(500)
       .json(new ApiError(500, "Internal Server Error", err));

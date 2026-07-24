@@ -8,7 +8,7 @@ export interface IUser extends Document {
   following: Types.ObjectId[],
   bio: string;
   profileImage: string;
-  refreshToken?: string
+  refreshToken?: string | undefined;
   password: string;
 
   createdAt: Date;

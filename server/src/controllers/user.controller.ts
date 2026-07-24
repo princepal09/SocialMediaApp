@@ -1,11 +1,16 @@
 import { Request, Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  removeFromCloudinary,
+  uploadToCloudinary,
+} from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { env } from "../constants.js";
 import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
+import fs from "fs";
+
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
@@ -326,7 +331,7 @@ export const addBio = async (req: Request, res: Response) => {
       .status(201)
       .json(new ApiResponse(201, user, "Bio Added Successfully!!"));
   } catch (err: any) {
-    console.log("ERROR WHILE Changing the password", err);
+    console.log("ERROR WHILE ADd the Bio", err);
     return res
       .status(500)
       .json(new ApiError(500, "Internal Server Error", err));
@@ -360,7 +365,52 @@ export const updateBio = async (req: Request, res: Response) => {
       .status(201)
       .json(new ApiResponse(201, user, "Bio Updated Successfully!!"));
   } catch (err: any) {
-    console.log("ERROR WHILE Changing the password", err);
+    console.log("ERROR WHILE updating the bio", err);
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};
+
+export const updateProfileImage = async (req: Request, res: Response) => {
+  try {
+    let profileImagePath = req.file?.path;
+    if (!profileImagePath) {
+      throw new ApiError(400, "Profile Image is Required");
+    }
+
+    const userId = req.user?._id;
+    if (!userId) {
+      fs.unlinkSync(profileImagePath);
+      throw new ApiError(500, "User id not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      fs.unlinkSync(profileImagePath);
+      throw new ApiError(500, "User not found");
+    }
+
+    if (!user.profileImage) {
+      const profileImage = await uploadToCloudinary(profileImagePath);
+      user.profileImage = profileImage?.secure_url;
+      await user.save({ validateBeforeSave: false });
+      return res
+        .status(201)
+        .json(new ApiResponse(201, null, "Profile Image Added Successfully"));
+    } else {
+      const oldProfileImageUrl = user.profileImage;
+      await removeFromCloudinary(oldProfileImageUrl);
+      const newProfileImage = await uploadToCloudinary(profileImagePath);
+      user.profileImage = newProfileImage?.secure_url;
+      await user.save({ validateBeforeSave: false });
+
+      return res
+        .status(201)
+        .json(new ApiResponse(201, null, "Profile Image Updated Successfully"));
+    }
+  } catch (err: any) {
+    console.log("ERROR WHILE Updating the profile", err);
     return res
       .status(500)
       .json(new ApiError(500, "Internal Server Error", err));

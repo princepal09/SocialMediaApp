@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   registerUser,
   updateBio,
+  updateProfileImage,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
@@ -19,9 +20,12 @@ router.post("/refresh-token", refreshAccessToken);
 
 //secured routes
 router.post("/logout", verifyUser, logoutUser);
-router.get("/current-user", verifyUser, getCurrentUser);
-router.patch("/change-password", verifyUser, changeCurrentPassword);
-router.post("/add-bio", verifyUser, addBio);
-router.patch("/update-bio", verifyUser, updateBio);
+
+//user
+router.get("/users/current-user", verifyUser, getCurrentUser);
+router.patch("/users/change-password", verifyUser, changeCurrentPassword);
+router.post("/users/add-bio", verifyUser, addBio);
+router.patch("/users/update-bio", verifyUser, updateBio);
+router.patch("/users/update-profile", verifyUser, upload.single("profileImage"), updateProfileImage);
 
 export default router;

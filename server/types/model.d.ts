@@ -7,7 +7,7 @@ export interface IUser extends Document {
   followers : Types.ObjectId[],
   following: Types.ObjectId[],
   bio: string;
-  profileImage: string;
+  profileImage: string | undefined;
   refreshToken?: string | undefined;
   password: string;
 

@@ -104,7 +104,7 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
-    console.log(password)
+    console.log(password);
     if (!username && !email) {
       throw new ApiError(400, "Username or email is required");
     }
@@ -137,7 +137,6 @@ export const loginUser = async (req: Request, res: Response) => {
       secure: true,
     };
 
-
     const loggedInUser = await User.findById(user._id).select(
       "-password -refreshToken"
     );
@@ -157,6 +156,33 @@ export const loginUser = async (req: Request, res: Response) => {
           "Login Successfully"
         )
       );
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const user = await User.findByIdAndUpdate(userId, {
+        $unset : {
+            refreshToken : 1
+        }
+    }, {new : true})
+
+    const cookieOption = {
+         httpOnly : true,
+         secure : true
+    }
+
+    return res.status(200)
+    .clearCookie("accessToken", cookieOption)
+    .clearCookie("refreshToken", cookieOption)
+    .json(
+        new ApiResponse(200, null, "Log Out Successfully")
+    )
   } catch (err: any) {
     return res
       .status(500)

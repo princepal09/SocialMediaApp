@@ -60,13 +60,40 @@ export const registerUser = async (req: Request, res: Response) => {
       });
     }
 
-    if (!user) {
-      throw new ApiError(500, "Something went wrong while creating the user");
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+    if (!createdUser) {
+      throw new ApiError(500, "Error while creating the user");
     }
+
+    const accessToken = createdUser.generateAccessToken();
+    const refreshToken = createdUser.generateRefreshToken();
+
+    createdUser.refreshToken = refreshToken;
+    await createdUser.save({ validateBeforeSave: false });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+    };
 
     return res
       .status(201)
-      .json(new ApiResponse(201, user, "User registered successfully!!"));
+      .cookie("accessToken", accessToken)
+      .cookie("refreshToken", refreshToken)
+      .json(
+        new ApiResponse(
+          201,
+          {
+            success: true,
+            user: createdUser,
+            accessToken,
+            refreshToken,
+          },
+          "User registered successfully!!"
+        )
+      );
   } catch (err: any) {
     console.error("ERROR", err);
     return res

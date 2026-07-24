@@ -5,7 +5,7 @@ import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { env } from "../constants.js";
 import { MyJwtPayload } from "../middlewares/auth.middleware.js";
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
@@ -159,7 +159,7 @@ export const loginUser = async (req: Request, res: Response) => {
         )
       );
   } catch (err: any) {
-        console.log("ERROR WHILE LOGIN", err);
+    console.log("ERROR WHILE LOGIN", err);
 
     return res
       .status(500)
@@ -170,23 +170,26 @@ export const loginUser = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
-    const user = await User.findByIdAndUpdate(userId, {
-        $unset : {
-            refreshToken : 1
-        }
-    }, {new : true})
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $unset: {
+          refreshToken: 1,
+        },
+      },
+      { new: true }
+    );
 
     const cookieOption = {
-         httpOnly : true,
-         secure : true
-    }
+      httpOnly: true,
+      secure: true,
+    };
 
-    return res.status(200)
-    .clearCookie("accessToken", cookieOption)
-    .clearCookie("refreshToken", cookieOption)
-    .json(
-        new ApiResponse(200, null, "User Logged Out Successfully")
-    )
+    return res
+      .status(200)
+      .clearCookie("accessToken", cookieOption)
+      .clearCookie("refreshToken", cookieOption)
+      .json(new ApiResponse(200, null, "User Logged Out Successfully"));
   } catch (err: any) {
     console.log("ERROR WHILE LOGOUT ", err);
     return res
@@ -195,57 +198,72 @@ export const logoutUser = async (req: Request, res: Response) => {
   }
 };
 
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.header("Auhtorization")?.split("")[1];
 
-export const refreshAccessToken = async(req:Request,res:Response) =>{
-  try{
-    const incomingRefreshToken = req.cookies.refreshToken || req.header("Auhtorization")?.split("")[1];
-
-    if(!incomingRefreshToken){
+    if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized Request");
     }
 
-    const decode = jwt.verify(incomingRefreshToken, env.ACCESS_TOKEN_SECRET) as MyJwtPayload
+    const decode = jwt.verify(
+      incomingRefreshToken,
+      env.ACCESS_TOKEN_SECRET
+    ) as MyJwtPayload;
 
     const user = await User.findById(decode._id);
 
-    if(!user){
+    if (!user) {
       throw new ApiError(401, "Invalid refresh token");
     }
 
-    if(incomingRefreshToken !== user?.refreshToken){
+    if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh Token in invalid or expired");
     }
 
-    const newRefreshToken =  user.generateRefreshToken()
-    const newAccessToken =  user.generateAccessToken()
+    const newRefreshToken = user.generateRefreshToken();
+    const newAccessToken = user.generateAccessToken();
 
-    user.refreshToken = newRefreshToken
-    await user.save({validateBeforeSave : false});
+    user.refreshToken = newRefreshToken;
+    await user.save({ validateBeforeSave: false });
 
     const cookieOptions = {
-      httpOnly : true,
-      secure : true
-    }
-    return res.status(201)
-    .cookie("accessToken", newAccessToken,cookieOptions)
-    .cookie("refreshToken", newRefreshToken, cookieOptions)
-    .json(
-      new ApiResponse(201, {refreshToken:newRefreshToken, 
-        accessToken: newAccessToken
-      }, "Refresh Token successfully created")
-    )
-
-
-    
-
-
-  }catch (err: any) {
+      httpOnly: true,
+      secure: true,
+    };
+    return res
+      .status(201)
+      .cookie("accessToken", newAccessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .json(
+        new ApiResponse(
+          201,
+          { refreshToken: newRefreshToken, accessToken: newAccessToken },
+          "Refresh Token successfully created"
+        )
+      );
+  } catch (err: any) {
     console.log("ERROR WHILE GET REFRESH TOKEN", err);
     return res
       .status(500)
       .json(new ApiError(500, "Internal Server Error", err));
   }
+};
 
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
 
+    if (!user) {
+      throw new ApiError(401, "Unauthorized acces");
+    }
 
-}
+    return res.status(200).json(new ApiResponse(200, user, "CURRENT USER"));
+  } catch (err: any) {
+    console.log("ERROR WHILE Get current User", err);
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};

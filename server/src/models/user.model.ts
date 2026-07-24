@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema<IUser>(
     username: {
       type: String,
       required: true,
+      index : true,
+      unique : true,
       trim: true,
       minlength: 3,
       maxlength: 30,
@@ -38,7 +40,8 @@ const userSchema = new mongoose.Schema<IUser>(
       required: true,
     },
     refreshToken : {
-      type : String
+      type : String,
+      select : false
     },
     password: {
       type: String,

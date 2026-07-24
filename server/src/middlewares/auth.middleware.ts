@@ -20,6 +20,8 @@ export const verifyUser = async (
       throw new ApiError(401, "Unauthorized Access");
     }
 
+    console.log("accessToken", token);
+
     const decoded = jwt.verify(
       token,
       process.env.ACCESS_TOKEN_SECRET!
@@ -34,7 +36,9 @@ export const verifyUser = async (
     }
     console.log(user);
     req.user = user;
-    
+
+    return next();
+
   } catch (err: any) {
     console.log("Error while verifying the token", err);
     return res

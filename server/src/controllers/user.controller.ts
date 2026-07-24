@@ -304,3 +304,32 @@ export const changeCurrentPassword = async (req: Request, res: Response) => {
       .json(new ApiError(500, "Internal Server Error", err));
   }
 };
+
+export const addBio = async (req: Request, res: Response) => {
+  try {
+    const { bio } = req.body;
+    if (!bio || bio === "") {
+      throw new ApiError(400, "Bio is required");
+    }
+
+    const userId = req.user?._id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(409, "User is not found");
+    }
+
+    user.bio = bio.trim();
+    await user.save({validateBeforeSave : false});
+
+    return res.status(201).json(
+      new ApiResponse(201, user, "Bio Added Successfully!!")
+    )
+
+  } catch (err: any) {
+    console.log("ERROR WHILE Changing the password", err);
+    return res
+      .status(500)
+      .json(new ApiError(500, "Internal Server Error", err));
+  }
+};

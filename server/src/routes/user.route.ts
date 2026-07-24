@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  addBio,
   changeCurrentPassword,
   getCurrentUser,
   loginUser,
@@ -19,5 +20,6 @@ router.post("/refresh-token", refreshAccessToken);
 router.post("/logout", verifyUser, logoutUser);
 router.get("/current-user", verifyUser, getCurrentUser);
 router.patch("/change-password", verifyUser, changeCurrentPassword);
+router.post("/add-bio", verifyUser, addBio);
 
 export default router;

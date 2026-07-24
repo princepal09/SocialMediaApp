@@ -7,6 +7,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  updateBio,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
@@ -21,5 +22,6 @@ router.post("/logout", verifyUser, logoutUser);
 router.get("/current-user", verifyUser, getCurrentUser);
 router.patch("/change-password", verifyUser, changeCurrentPassword);
 router.post("/add-bio", verifyUser, addBio);
+router.patch("/update-bio", verifyUser, updateBio);
 
 export default router;

@@ -40,15 +40,21 @@ export const verifyUser = async (
     return next();
 
   } catch (err: any) {
-    console.log("Error while verifying the token", err);
-    return res
-      .status(500)
-      .json(
-        new ApiError(
-          500,
-          "internal server error while verifying the token",
-          err
-        )
-      );
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

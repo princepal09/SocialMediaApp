@@ -10,34 +10,77 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 export const createPost = async (req: Request, res: Response) => {
   try {
     const profileImagePath = req.file?.path;
+    console.log("Body:", req.body);
+    console.log("File:", req.file);
     const { content } = req.body;
     const userId = req.user?.id;
-    if (!profileImagePath) {
-      throw new ApiError(400, "Profile Image is Required");
+    let imageUrl;
+
+    if (profileImagePath) {
+      imageUrl = await uploadToCloudinary(profileImagePath);
     }
-    const imageUrl = await uploadToCloudinary(profileImagePath);
 
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
-    let post;
-    if (imageUrl === undefined) {
-      post = await Post.create({ content });
-    } else {
-      post = await Post.create({
-        content,
-        image: imageUrl.secure_url,
-        owner: userId,
-      });
-    }
+    const post = await Post.create({
+      content,
+      image: imageUrl?.secure_url,
+      owner: userId,
+    });
 
     return res
       .status(201)
       .json(new ApiResponse(201, post, "Post Created Successfully"));
   } catch (err: any) {
-    console.log("Error while updating the createPost error", err.message);
-    return res.json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+//here i need to implement the mongodb aggregation pipeline to get the comments
+export const getAllPostsForHome = async (req: Request, res: Response) => {
+  try {
+    const posts = await Post.find({});
+    if (!posts) {
+      throw new ApiError(404, "Posts are not there");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, posts, "POSTS fetched Successfully"));
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

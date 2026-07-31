@@ -101,10 +101,22 @@ export const registerUser = async (req: Request, res: Response) => {
         )
       );
   } catch (err: any) {
-    console.error("ERROR WHILE REGISTER", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -164,11 +176,22 @@ export const loginUser = async (req: Request, res: Response) => {
         )
       );
   } catch (err: any) {
-    console.log("ERROR WHILE LOGIN", err);
+    console.error(err);
 
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -196,10 +219,22 @@ export const logoutUser = async (req: Request, res: Response) => {
       .clearCookie("refreshToken", cookieOption)
       .json(new ApiResponse(200, null, "User Logged Out Successfully"));
   } catch (err: any) {
-    console.log("ERROR WHILE LOGOUT ", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -249,10 +284,22 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         )
       );
   } catch (err: any) {
-    console.log("ERROR WHILE GET REFRESH TOKEN", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -266,10 +313,22 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
     return res.status(200).json(new ApiResponse(200, user, "CURRENT USER"));
   } catch (err: any) {
-    console.log("ERROR WHILE Get current User", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -303,10 +362,22 @@ export const changeCurrentPassword = async (req: Request, res: Response) => {
       .status(200)
       .json(new ApiResponse(200, null, "Password changed successfully!!"));
   } catch (err: any) {
-    console.log("ERROR WHILE Changing the password", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -331,10 +402,22 @@ export const addBio = async (req: Request, res: Response) => {
       .status(201)
       .json(new ApiResponse(201, user, "Bio Added Successfully!!"));
   } catch (err: any) {
-    console.log("ERROR WHILE ADd the Bio", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -365,10 +448,22 @@ export const updateBio = async (req: Request, res: Response) => {
       .status(201)
       .json(new ApiResponse(201, user, "Bio Updated Successfully!!"));
   } catch (err: any) {
-    console.log("ERROR WHILE updating the bio", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -410,9 +505,26 @@ export const updateProfileImage = async (req: Request, res: Response) => {
         .json(new ApiResponse(201, null, "Profile Image Updated Successfully"));
     }
   } catch (err: any) {
-    console.log("ERROR WHILE Updating the profile", err);
-    return res
-      .status(500)
-      .json(new ApiError(500, "Internal Server Error", err));
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
+
+
+//create controller to get user profile details. It should contain posts, followers and followings.
+// Here I need to use mongoDB aggregation pipelines
+

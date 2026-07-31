@@ -11,6 +11,7 @@ import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import fs from "fs";
+import { abort } from "process";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -605,5 +606,99 @@ export const getUserProfileData = async (req: Request, res: Response) => {
   }
 };
 
+//create a controller to follow and unfollow
+export const followUser = async (req: Request, res: Response) => {
+  let session: mongoose.ClientSession | null = null;
 
-//create a controller to follow and unfollow 
+  try {
+    const { username } = req.params;
+    const loggedInUserId = req.user?.id;
+    if (!loggedInUserId) {
+      throw new ApiError(401, "LoggedIn user not found");
+    }
+
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    // Find the user to follow
+    const userToBeFollowed = await User.findOne({ username }).session(session);
+
+    if (!userToBeFollowed) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Prevent Self follow
+    if (userToBeFollowed._id.equals(loggedInUserId)) {
+      throw new ApiError(400, "You cannot follow yourself");
+    }
+
+    // check if already following
+    const alreadyFollowing = await User.exists({
+      _id: loggedInUserId,
+      following: userToBeFollowed._id,
+    }).session(session);
+
+    if (alreadyFollowing) {
+      throw new ApiError(400, "You are already following this user");
+    }
+    // Add logged-in user to target user's followers
+    await User.findByIdAndUpdate(
+      userToBeFollowed._id,
+      {
+        $addToSet: {
+          followers: loggedInUserId,
+        },
+      },
+      {
+        session,
+      }
+    );
+    // Add logged-in user to target user's following
+    await User.findByIdAndUpdate(
+      loggedInUserId,
+      {
+        $addToSet: {
+          following: userToBeFollowed._id,
+        },
+      },
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          `You are now following ${userToBeFollowed.username}`
+        )
+      );
+  } catch (err: any) {
+    if (session) {
+      await session.abortTransaction();
+    }
+
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
+  } finally {
+    // Always close the session
+    if (session) {
+      session.endSession();
+    }
+  }
+};

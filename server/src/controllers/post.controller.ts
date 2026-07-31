@@ -6,6 +6,7 @@ import { Request, Response } from "express";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
@@ -323,24 +324,3 @@ export const getUserPosts = async (req: Request, res: Response) => {
   }
 };
 
-export const followUnfollowUser = async (req: Request, res: Response) => {
-  try {
-  } catch (err: any) {
-    console.error(err);
-
-    if (err instanceof ApiError) {
-      return res.status(err.status).json({
-        status: err.status,
-        success: false,
-        message: err.message,
-        errors: err.errors,
-      });
-    }
-
-    return res.status(500).json({
-      status: 500,
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};

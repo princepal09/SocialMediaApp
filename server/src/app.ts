@@ -2,7 +2,8 @@ import express, {Express, Request, Response} from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import testRoutes from '../src/routes/test.route.js'
-import authRoutes from '../src/routes/user.route.js'
+import authRoutes from '../src/routes/auth.route.js'
+import userRoutes from '../src/routes/user.route.js'
 import { env } from './constants.js';
 import postRoutes from '../src/routes/post.route.js'
 export const app = express() as Express;
@@ -17,6 +18,7 @@ app.use(cookieParser())
 
 app.use("/api/v1/test",testRoutes)
 app.use("/api/v1/auth",authRoutes)
+app.use("/api/v1/users",userRoutes)
 app.use("/api/v1/post",postRoutes)
 
 app.get('/', (req:Request, res : Response) =>{

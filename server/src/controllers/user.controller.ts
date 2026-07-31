@@ -9,6 +9,7 @@ import { User } from "../models/user.model.js";
 import { env } from "../constants.js";
 import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import fs from "fs";
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -524,7 +525,82 @@ export const updateProfileImage = async (req: Request, res: Response) => {
   }
 };
 
-
 //create controller to get user profile details. It should contain posts, followers and followings.
-// Here I need to use mongoDB aggregation pipelines
+// Here I need to use mongoDB populate
 
+export const getUserProfileData = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    if (!username) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    const profileData = await User.aggregate([
+      {
+        $match: {
+          username: username,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "posts",
+          localField: "_id",
+          foreignField: "owner",
+          as: "posts",
+        },
+      },
+
+      {
+        $project: {
+          username: 1,
+          email: 1,
+          bio: 1,
+          profileImage: 1,
+          followersCount: {
+            $size: {
+              $ifNull: ["$followers", []],
+            },
+          },
+          followingCount: {
+            $size: {
+              $ifNull: ["$following", []],
+            },
+          },
+          postCount: {
+            $size: {
+              $ifNull: ["$posts", []],
+            },
+          },
+        },
+      },
+    ]);
+
+    if (!profileData.length) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, profileData[0], "User data fetched successfully!")
+      );
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};

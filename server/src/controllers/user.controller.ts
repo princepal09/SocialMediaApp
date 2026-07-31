@@ -604,3 +604,6 @@ export const getUserProfileData = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+//create a controller to follow and unfollow 

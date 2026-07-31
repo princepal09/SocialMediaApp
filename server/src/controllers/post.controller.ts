@@ -181,3 +181,166 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUserPosts = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.params;
+    if (!username) {
+      throw new ApiError(401, "User Not Found");
+    }
+
+    const userPosts = await Post.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      {
+        $unwind: "$owner",
+      },
+      {
+        $match: {
+          "owner.username": username,
+        },
+      },
+
+      // Fetch comments
+      {
+        $lookup: {
+          from: "comments",
+          localField: "comments",
+          foreignField: "_id",
+          as: "comments",
+        },
+      },
+
+      // Fetch users who commented
+      {
+        $lookup: {
+          from: "users",
+          localField: "comments.commentedBy",
+          foreignField: "_id",
+          as: "commentUsers",
+        },
+      },
+
+      {
+        $addFields: {
+          comments: {
+            $map: {
+              input: "$comments",
+              as: "comment",
+              in: {
+                _id: "$$comment._id",
+                comment: "$$comment.comment",
+                createdAt: "$$comment.createdAt",
+                commentedBy: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: "$commentUsers",
+                        as: "user",
+                        cond: {
+                          $eq: ["$$user._id", "$$comment.commentedBy"],
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+
+          commentCount: {
+            $size: "$comments",
+          },
+        },
+      },
+
+      {
+        $project: {
+          content: 1,
+          image: 1,
+          createdAt: 1,
+          commentCount: 1,
+
+          owner: {
+            _id: "$owner._id",
+            username: "$owner.username",
+            profileImage: "$owner.profileImage",
+          },
+
+          comments: {
+            $map: {
+              input: "$comments",
+              as: "comment",
+              in: {
+                _id: "$$comment._id",
+                comment: "$$comment.comment",
+                createdAt: "$$comment.createdAt",
+                commentedBy: {
+                  _id: "$$comment.commentedBy._id",
+                  username: "$$comment.commentedBy.username",
+                  profileImage: "$$comment.commentedBy.profileImage",
+                },
+              },
+            },
+          },
+        },
+      },
+
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, userPosts, "User Posts Fetched Successfully"));
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const followUnfollowUser = async (req: Request, res: Response) => {
+  try {
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};

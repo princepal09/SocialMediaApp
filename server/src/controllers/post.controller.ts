@@ -65,6 +65,9 @@ export const createPost = async (req: Request, res: Response) => {
 export const getAllPostsForHome = async (req: Request, res: Response) => {
   try {
     const posts = await Post.aggregate([
+      // ==========================
+      // Owner
+      // ==========================
       {
         $lookup: {
           from: "users",
@@ -73,7 +76,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
           as: "owner",
         },
       },
-
       {
         $unwind: {
           path: "$owner",
@@ -81,14 +83,9 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
-      {
-        $project: {
-          "owner.password": 0,
-          "owner.refreshToken": 0,
-          "owner.__v": 0,
-        },
-      },
-
+      // ==========================
+      // Comments
+      // ==========================
       {
         $lookup: {
           from: "comments",
@@ -148,23 +145,104 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
+      // ==========================
+      // Likes
+      // ==========================
       {
-        $addFields: {
-          commentsCount: { $size: "$comments" },
-        },
-      },
-      {
-        $project: {
-          commentUsers: 0,
-          __v: 0,
+        $lookup: {
+          from: "likes",
+          localField: "likes",
+          foreignField: "_id",
+          as: "likes",
         },
       },
 
       {
-        $sort: { createdAt: -1 },
+        $lookup: {
+          from: "users",
+          localField: "likes.likedBy",
+          foreignField: "_id",
+          as: "likeUsers",
+        },
+      },
+
+      {
+        $addFields: {
+          likes: {
+            $map: {
+              input: "$likes",
+              as: "like",
+              in: {
+                _id: "$$like._id",
+                createdAt: "$$like.createdAt",
+                likedBy: {
+                  $let: {
+                    vars: {
+                      user: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$likeUsers",
+                              as: "user",
+                              cond: {
+                                $eq: ["$$user._id", "$$like.likedBy"],
+                              },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    },
+                    in: {
+                      _id: "$$user._id",
+                      username: "$$user.username",
+                      profileImage: "$$user.profileImage",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // ==========================
+      // Counts
+      // ==========================
+      {
+        $addFields: {
+          commentsCount: {
+            $size: "$comments",
+          },
+          likesCount: {
+            $size: "$likes",
+          },
+        },
+      },
+
+      // ==========================
+      // Remove sensitive fields
+      // ==========================
+      {
+        $project: {
+          "owner.password": 0,
+          "owner.refreshToken": 0,
+          "owner.__v": 0,
+          commentUsers: 0,
+          likeUsers: 0,
+          __v: 0,
+        },
+      },
+
+      // ==========================
+      // Latest posts first
+      // ==========================
+      {
+        $sort: {
+          createdAt: -1,
+        },
       },
     ]);
-    console.log(posts);
 
     return res
       .status(200)

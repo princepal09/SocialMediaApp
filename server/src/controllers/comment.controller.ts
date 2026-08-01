@@ -107,6 +107,7 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const deleteComment = async (req: Request, res: Response) => {
   try {
     const { commentId, postId } = req.params;

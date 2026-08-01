@@ -13,12 +13,18 @@ const postSchema = new mongoose.Schema<IPost>(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref : "User"
+      ref: "User",
     },
     comments: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Comment",
+      },
+    ],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Like",
       },
     ],
   },

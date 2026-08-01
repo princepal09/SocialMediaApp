@@ -66,7 +66,7 @@ export const togglePostLike = async (req: Request, res: Response) => {
 
 export const getUsersWhoLikedPost = async (req: Request, res: Response) => {
   try {
-    const  postId  = req.params.postId as string;
+    const postId = req.params.postId as string;
     const userId = req.user?._id;
 
     if (!postId) {

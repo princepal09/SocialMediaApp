@@ -1,6 +1,5 @@
 import { Post } from "../models/post.model.js";
 import { Comment } from "../models/comment.model.js";
-import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Request, Response } from "express";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
@@ -82,6 +81,13 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $project: {
+          "owner.password": 0,
+          "owner.refreshToken": 0,
+          "owner.__v": 0,
+        },
+      },
 
       // ==========================
       // Comments
@@ -94,7 +100,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
           as: "comments",
         },
       },
-
       {
         $lookup: {
           from: "users",
@@ -103,7 +108,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
           as: "commentUsers",
         },
       },
-
       {
         $addFields: {
           comments: {
@@ -146,67 +150,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
       },
 
       // ==========================
-      // Likes
-      // ==========================
-      {
-        $lookup: {
-          from: "likes",
-          localField: "likes",
-          foreignField: "_id",
-          as: "likes",
-        },
-      },
-
-      {
-        $lookup: {
-          from: "users",
-          localField: "likes.likedBy",
-          foreignField: "_id",
-          as: "likeUsers",
-        },
-      },
-
-      {
-        $addFields: {
-          likes: {
-            $map: {
-              input: "$likes",
-              as: "like",
-              in: {
-                _id: "$$like._id",
-                createdAt: "$$like.createdAt",
-                likedBy: {
-                  $let: {
-                    vars: {
-                      user: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$likeUsers",
-                              as: "user",
-                              cond: {
-                                $eq: ["$$user._id", "$$like.likedBy"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                    in: {
-                      _id: "$$user._id",
-                      username: "$$user.username",
-                      profileImage: "$$user.profileImage",
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-
-      // ==========================
       // Counts
       // ==========================
       {
@@ -221,15 +164,11 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
       },
 
       // ==========================
-      // Remove sensitive fields
+      // Remove unwanted fields
       // ==========================
       {
         $project: {
-          "owner.password": 0,
-          "owner.refreshToken": 0,
-          "owner.__v": 0,
           commentUsers: 0,
-          likeUsers: 0,
           __v: 0,
         },
       },
@@ -244,6 +183,7 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
       },
     ]);
 
+    // console.log(posts);
     return res
       .status(200)
       .json(new ApiResponse(200, posts, "POSTS fetched Successfully"));

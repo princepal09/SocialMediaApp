@@ -30,14 +30,6 @@ export interface IPost extends Document {
   updatedAt: Date;
 }
 
-export interface ILike extends Document {
-  post: Types.ObjectId;
-  likedBy: Types.ObjectId;
-
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface IComment extends Document {
   post: Types.ObjectId;
   commentedBy: Types.ObjectId;

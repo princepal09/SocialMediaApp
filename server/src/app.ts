@@ -21,7 +21,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/test", testRoutes);
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/like", likeRoutes);
+app.use("/api/v1/likes", likeRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/post", postRoutes);
 app.use("/api/v1/comments", commentRoutes);

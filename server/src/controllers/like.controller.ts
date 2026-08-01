@@ -63,3 +63,82 @@ export const togglePostLike = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUsersWhoLikedPost = async (req: Request, res: Response) => {
+  try {
+    const  postId  = req.params.postId as string;
+    const userId = req.user?._id;
+
+    if (!postId) {
+      throw new ApiError(404, "Post Id not found");
+    }
+
+    if (!userId) {
+      throw new ApiError(404, "User Id not found");
+    }
+
+    const result = await Post.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(postId),
+        },
+      },
+
+      {
+        $addFields: {
+          likes: {
+            $ifNull: ["$likes", []],
+          },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "likes",
+          foreignField: "_id",
+          as: "likedUsers",
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          likedUsers: {
+            $map: {
+              input: "$likedUsers",
+              as: "user",
+              in: {
+                _id: "$$user._id",
+                username: "$$user.username",
+                profileImage: "$$user.profileImage",
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result[0]?.likedUsers || [],
+          "Users fetched successfully"
+        )
+      );
+  } catch (err: any) {
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};

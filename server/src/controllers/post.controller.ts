@@ -64,9 +64,6 @@ export const createPost = async (req: Request, res: Response) => {
 export const getAllPostsForHome = async (req: Request, res: Response) => {
   try {
     const posts = await Post.aggregate([
-      // ==========================
-      // Owner
-      // ==========================
       {
         $lookup: {
           from: "users",
@@ -89,9 +86,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
-      // ==========================
-      // Comments
-      // ==========================
       {
         $lookup: {
           from: "comments",
@@ -149,9 +143,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
-      // ==========================
-      // Counts
-      // ==========================
       {
         $addFields: {
           commentsCount: {
@@ -163,9 +154,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
-      // ==========================
-      // Remove unwanted fields
-      // ==========================
       {
         $project: {
           commentUsers: 0,
@@ -173,9 +161,6 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
         },
       },
 
-      // ==========================
-      // Latest posts first
-      // ==========================
       {
         $sort: {
           createdAt: -1,

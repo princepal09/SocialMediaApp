@@ -32,11 +32,10 @@ export const togglePostLike = async (req: Request, res: Response) => {
         $pull: {
           likes: userId,
         },
-        
       });
-       return res
-      .status(201)
-      .json(new ApiResponse(201, null, "You unliked the post"));
+      return res
+        .status(201)
+        .json(new ApiResponse(201, null, "You unliked the post"));
     } else {
       await Post.findByIdAndUpdate(postId, {
         $addToSet: {

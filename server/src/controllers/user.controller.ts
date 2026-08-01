@@ -612,7 +612,7 @@ export const followUser = async (req: Request, res: Response) => {
 
   try {
     const { username } = req.params;
-    const loggedInUserId = req.user?.id;
+    const loggedInUserId = req.user?._id;
     if (!loggedInUserId) {
       throw new ApiError(401, "LoggedIn user not found");
     }
@@ -700,5 +700,67 @@ export const followUser = async (req: Request, res: Response) => {
     if (session) {
       session.endSession();
     }
+  }
+};
+
+export const unfollowUser = async (req: Request, res: Response) => {
+  try {
+    const loggedInUserId = req.user?._id;
+    const { username } = req.params;
+
+    if (!loggedInUserId) {
+      throw new ApiError(401, "Logged In User not found");
+    }
+
+    if (!username) {
+      throw new ApiError(401, "username not found");
+    }
+
+    const userToBeUnfollowed = await User.findOne({ username });
+    if (!userToBeUnfollowed) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (userToBeUnfollowed._id.equals(loggedInUserId)) {
+      throw new ApiError(400, "You cannot follow yourself");
+    }
+
+    await User.findByIdAndUpdate(userToBeUnfollowed._id, {
+      $pull: {
+        followers: userToBeUnfollowed._id,
+      },
+    });
+
+    await User.findByIdAndUpdate(loggedInUserId, {
+      $pull: {
+        following: userToBeUnfollowed._id,
+      },
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          `You Unfollowed ${userToBeUnfollowed.username}`
+        )
+      );
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

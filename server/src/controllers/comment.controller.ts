@@ -80,20 +80,73 @@ export const createComment = async (req: Request, res: Response) => {
 
 export const getCommentsByPostId = async (req: Request, res: Response) => {
   try {
-
-    const {postId} = req.params;
-    if(!postId){
-        throw new ApiError(401, "Post Id not found");
+    const { postId } = req.params;
+    if (!postId) {
+      throw new ApiError(401, "Post Id not found");
     }
     const comments = await Comment.find({
-        post : postId,
+      post: postId,
+    });
 
-    })
-    
-     return res.status(200).json(
-        new ApiResponse(200, comments, "Comments fetched Successfully")
-     )
+    return res
+      .status(200)
+      .json(new ApiResponse(200, comments, "Comments fetched Successfully"));
+  } catch (err: any) {
+    console.error(err);
 
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+export const deleteComment = async (req: Request, res: Response) => {
+  try {
+    const { commentId, postId } = req.params;
+    const userId = req.user?._id;
+
+    if (!commentId) throw new ApiError(400, "Comment Id not found");
+    if (!postId) throw new ApiError(400, "Post Id not found");
+    if (!userId) throw new ApiError(401, "User not authenticated");
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      throw new ApiError(404, "Comment not found");
+    }
+
+    // Only comment owner or post owner can delete
+    const isCommentOwner = comment.commentedBy.equals(userId);
+    const isPostOwner = post.owner.equals(userId);
+
+    if (!isCommentOwner && !isPostOwner) {
+      throw new ApiError(403, "You are not authorized to perform this action");
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+
+    await Post.findByIdAndUpdate(postId, {
+      $pull: {
+        comments: comment._id,
+      },
+    });
+
+    return res.status(200).json(
+      new ApiResponse(200, null, "Comment deleted successfully")
+    );
   } catch (err: any) {
     console.error(err);
 

@@ -39,7 +39,7 @@ export interface ILike extends Document {
 
 export interface IComment extends Document {
   post: Types.ObjectId;
-  commentBy: Types.ObjectId;
+  commentedBy: Types.ObjectId;
   comment: string;
 
   createdAt: Date;

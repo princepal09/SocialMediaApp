@@ -25,9 +25,7 @@ const LoginUserForm = () => {
             htmlFor="password"
             className="text-sm font-medium text-gray-300"
           >
-            Password
-            {" "}
-            <span className="text-red-400">*</span>
+            Password <span className="text-red-400">*</span>
           </label>
 
           <button

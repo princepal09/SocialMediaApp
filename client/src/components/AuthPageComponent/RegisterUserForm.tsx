@@ -9,14 +9,22 @@ import {
 const RegisterUserForm = () => {
   const {
     register,
+    reset,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
-
+  
   const submitHandler = (data: RegisterFormData) => {
-    console.log(data);
+    const formData = new FormData();
+
+    formData.append("username", data.username);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("profileImage", data.profileImage[0]);
+
+    reset();
   };
 
   return (
@@ -97,21 +105,31 @@ const RegisterUserForm = () => {
         </label>
 
         <input
+          {...register("profileImage")}
           id="profilePicture"
           type="file"
           accept="image/*"
           className="rounded-lg border border-dashed border-gray-700 bg-[#1A1A1A] p-2.5 text-sm text-gray-400 file:mr-4 file:rounded-md file:border-0 file:bg-[#9929EA] file:px-4 file:py-2 file:text-white hover:file:bg-[#8420d1]"
         />
+        {errors.profileImage?.message && (
+          <p className="text-sm text-red-500">
+            {errors.profileImage.message.toString()}
+          </p>
+        )}
       </div>
 
-      {/* Register Button */}
       <button
         type="submit"
-        className="mt-2 w-full rounded-lg bg-[#9929EA] py-2.5 font-semibold text-white transition duration-300 hover:bg-[#8420d1]"
+        disabled={isSubmitting}
+        className={`mt-2 w-full rounded-lg py-2.5 font-semibold text-white transition
+    ${
+      isSubmitting
+        ? "cursor-not-allowed bg-gray-600"
+        : "bg-[#9929EA] hover:bg-[#8420d1]"
+    }`}
       >
-        Create Account
+        {isSubmitting ? "Creating Account..." : "Create Account"}
       </button>
-
       {/* Login Link */}
       <p className="text-center text-sm text-gray-400">
         Already have an account?{" "}

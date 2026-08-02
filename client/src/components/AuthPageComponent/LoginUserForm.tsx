@@ -7,6 +7,7 @@ const LoginUserForm = () => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -14,6 +15,7 @@ const LoginUserForm = () => {
 
   const submitHandler = (data: LoginFormData) => {
     console.log(data);
+    reset();
   };
 
   return (

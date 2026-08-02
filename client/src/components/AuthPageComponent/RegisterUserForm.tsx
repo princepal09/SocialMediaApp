@@ -7,6 +7,8 @@ import {
 } from "../../schemas/registerSchema";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { registerUser } from "../../api/auth.api";
+import { toast } from "sonner";
 
 const RegisterUserForm = () => {
   const {
@@ -18,17 +20,21 @@ const RegisterUserForm = () => {
     resolver: zodResolver(registerSchema),
   });
 
-  const [showPassword, setShowPassword] = useState(false);
 
-  const submitHandler = (data: RegisterFormData) => {
-    const formData = new FormData();
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-    formData.append("username", data.username);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-    formData.append("profileImage", data.profileImage[0]);
-
-    reset();
+  const submitHandler = async (data: RegisterFormData) => {
+    const toastId = toast.loading("Loading...")
+    try {
+      const response = await registerUser(data);
+      console.log("Register Response", response);
+      toast.success(response?.message);
+      reset();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Something went wrong");
+    }finally{
+        toast.dismiss(toastId)
+    }
   };
 
   return (
@@ -95,9 +101,12 @@ const RegisterUserForm = () => {
             className="w-full rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 pr-12 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
           />
 
-          <span onClick={() => setShowPassword(prev => !prev)} className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-white">
+          <span
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-white"
+          >
             {showPassword ? <FaRegEye /> : <FaRegEyeSlash />}
-          </span>  
+          </span>
         </div>
 
         {errors.password && (

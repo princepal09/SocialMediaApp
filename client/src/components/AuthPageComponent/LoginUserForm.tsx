@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { loginSchema, type LoginFormData } from "../../schemas/loginSchema";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import { loginUser } from "../../api/auth.api";
+import { toast } from "sonner";
 
 const LoginUserForm = () => {
   const {
@@ -15,11 +17,24 @@ const LoginUserForm = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  const submitHandler = async(data: LoginFormData) => {
-    await new Promise((resolve) => setTimeout(resolve, 6000));
-    reset();
+  const submitHandler = async (data: LoginFormData) => {
+    console.log(data)
+    const toastId = toast.loading("Loading...");
+    try {
+      const response = await loginUser(data);
+
+      console.log("Login Response", response);
+      toast.success(response?.message);
+      
+    } catch (err: any) {
+        console.log(err);
+      toast.error(err?.message ?? "Something went wrong");
+    }finally{
+        toast.dismiss(toastId);
+        reset();
+    }
   };
 
   return (

@@ -10,15 +10,15 @@ const LoginUserForm = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const submitHandler = (data: LoginFormData) => {
-    console.log(data);
+  const submitHandler = async(data: LoginFormData) => {
+    await new Promise((resolve) => setTimeout(resolve, 6000));
     reset();
   };
 
@@ -88,10 +88,15 @@ const LoginUserForm = () => {
 
       {/* Login Button */}
       <button
+        disabled={isSubmitting}
         type="submit"
-        className="w-full rounded-lg bg-[#9929EA] py-2.5 font-semibold text-white transition hover:bg-[#8420d1]"
+        className={`w-full rounded-lg bg-[#9929EA] py-2.5 font-semibold text-white transition hover:bg-[#8420d1] ${
+          isSubmitting
+            ? "cursor-not-allowed bg-gray-600"
+            : "bg-[#9929EA] hover:bg-[#8420d1]"
+        }`}
       >
-        Login
+        {isSubmitting ? "Signing..." : "Sign In"}
       </button>
 
       {/* Register Link */}

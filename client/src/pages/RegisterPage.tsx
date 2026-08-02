@@ -2,31 +2,27 @@ import RegisterUserForm from "../components/AuthPageComponent/RegisterUserForm";
 
 const RegisterPage = () => {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
-        
-        {/* Left Section */}
-        <div className="space-y-5">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#9929EA] leading-tight">
-            Welcome to Pixora
-          </h1>
+    <div className="min-h-screen bg-black px-6 py-10">
+      {/* Top Section */}
+      <div className="flex flex-col items-center gap-3 pt-4">
+        <h1 className="text-4xl md:text-5xl tracking-wider font-bold text-[#9929EA]">
+          Welcome to Pixora
+        </h1>
 
-          <p className="text-gray-300 text-lg md:text-xl max-w-md leading-relaxed">
-            Share your creativity, explore amazing artwork, and connect with
-            creators from around the world.
-          </p>
-        </div>
+        <p className="text-gray-300 font-bold tracking-wider text-lg md:text-xl">
+          A Place to Flex Your Creation
+        </p>
+      </div>
 
-        {/* Right Section */}
-        <div className="bg-[#111111] border border-gray-800 rounded-2xl p-8 shadow-xl">
-          <h2 className="text-2xl font-semibold text-white mb-2">
+      {/* Form Section */}
+      <div className="flex justify-center mt-9">
+        <div className="w-full max-w-lg rounded-2xl border border-gray-800 bg-[#111111] p-8 shadow-xl">
+          <h2 className="mb-6 text-2xl font-semibold text-white">
             Create your account
           </h2>
 
-          
-
           <RegisterUserForm />
-        </div>
+        </div>  
       </div>
     </div>
   );

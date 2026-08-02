@@ -20,7 +20,7 @@ const LoginUserForm = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const submitHandler = async (data: LoginFormData) => {
-    console.log(data)
+    // console.log(data)
     const toastId = toast.loading("Loading...");
     try {
       const response = await loginUser(data);

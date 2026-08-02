@@ -27,13 +27,12 @@ const LoginUserForm = () => {
 
       console.log("Login Response", response);
       toast.success(response?.message);
-      
     } catch (err: any) {
-        console.log(err);
+      console.log(err);
       toast.error(err?.message ?? "Something went wrong");
-    }finally{
-        toast.dismiss(toastId);
-        reset();
+    } finally {
+      toast.dismiss(toastId);
+      reset();
     }
   };
 

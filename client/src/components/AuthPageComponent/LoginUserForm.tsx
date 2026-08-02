@@ -1,21 +1,43 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { loginSchema, type LoginFormData } from "../../schemas/loginSchema";
 
 const LoginUserForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const submitHandler = (data: LoginFormData) => {
+    console.log(data);
+  };
+
   return (
-    <form className="mt-6 w-full max-w-md space-y-5">
-      {/* Email */}
+    <form
+      onSubmit={handleSubmit(submitHandler)}
+      className="mt-6 w-full max-w-md space-y-5"
+    >
+      {/* Username or Email */}
       <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-gray-300">
-          Email {""}
-          <span className="text-red-400">*</span>
+          Username Or Email <span className="text-red-400">*</span>
         </label>
 
         <input
+          {...register("identifier")}
           id="email"
-          type="email"
-          placeholder="Enter your email"
+          type="text"
+          placeholder="Enter your username or email"
           className="w-full rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
         />
+
+        {errors.identifier && (
+          <p className="text-sm text-red-500">{errors.identifier.message}</p>
+        )}
       </div>
 
       {/* Password */}
@@ -37,11 +59,16 @@ const LoginUserForm = () => {
         </div>
 
         <input
+          {...register("password")}
           id="password"
           type="password"
           placeholder="Enter your password"
           className="w-full rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
         />
+
+        {errors.password && (
+          <p className="text-sm text-red-500">{errors.password.message}</p>
+        )}
       </div>
 
       {/* Login Button */}
@@ -56,8 +83,8 @@ const LoginUserForm = () => {
       <p className="text-center text-sm text-gray-400">
         Don't have an account?{" "}
         <Link
-          to={"/register"}
-          className="cursor-pointer font-medium text-[#9929EA] hover:underline"
+          to="/register"
+          className="font-medium text-[#9929EA] hover:underline"
         >
           Register
         </Link>

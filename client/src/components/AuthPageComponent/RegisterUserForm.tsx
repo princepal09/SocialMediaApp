@@ -1,76 +1,103 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import {
+  registerSchema,
+  type RegisterFormData,
+} from "../../schemas/registerSchema";
 
 const RegisterUserForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const submitHandler = (data: RegisterFormData) => {
+    console.log(data);
+  };
+
   return (
-    <form className="mt-2 w-full max-w-2xl space-y-4">
+    <form
+      onSubmit={handleSubmit(submitHandler)}
+      className="mt-2 w-full max-w-2xl space-y-4"
+    >
       {/* Username & Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Username */}
         <div className="flex flex-col gap-2">
           <label
             htmlFor="username"
             className="text-sm font-medium text-gray-300"
           >
-            Username {" "}
-            <span className="text-red-400">*</span>
+            Username <span className="text-red-400">*</span>
           </label>
+
           <input
+            {...register("username")}
             id="username"
             type="text"
             placeholder="Enter username"
             className="rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
           />
+
+          {errors.username && (
+            <p className="text-sm text-red-500">{errors.username.message}</p>
+          )}
         </div>
 
+        {/* Email */}
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="email"
-            className="text-sm font-medium text-gray-300"
-          >
-            Email
-            {" "}
-            <span className="text-red-400">*</span>
+          <label htmlFor="email" className="text-sm font-medium text-gray-300">
+            Email <span className="text-red-400">*</span>
           </label>
+
           <input
+            {...register("email")}
             id="email"
             type="email"
             placeholder="Enter email"
             className="rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
           />
+
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
         </div>
       </div>
 
       {/* Password */}
       <div className="flex flex-col gap-2">
-        <label
-          htmlFor="password"
-          className="text-sm font-medium text-gray-300"
-        >
-          Password
-          {" "}
-            <span className="text-red-400">*</span>
+        <label htmlFor="password" className="text-sm font-medium text-gray-300">
+          Password <span className="text-red-400">*</span>
         </label>
+
         <input
+          {...register("password")}
           id="password"
           type="password"
           placeholder="Create a password"
           className="rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
         />
+
+        {errors.password && (
+          <p className="text-sm text-red-500">{errors.password.message}</p>
+        )}
       </div>
 
       {/* Profile Picture */}
       <div className="flex flex-col gap-2">
         <label
-          htmlFor="profile"
+          htmlFor="profilePicture"
           className="text-sm font-medium text-gray-300"
         >
-            
-          Profile Picture
-          {" "}
-            <span className="text-red-400">*</span>
+          Profile Picture <span className="text-red-400">*</span>
         </label>
 
         <input
-          id="profile"
+          id="profilePicture"
           type="file"
           accept="image/*"
           className="rounded-lg border border-dashed border-gray-700 bg-[#1A1A1A] p-2.5 text-sm text-gray-400 file:mr-4 file:rounded-md file:border-0 file:bg-[#9929EA] file:px-4 file:py-2 file:text-white hover:file:bg-[#8420d1]"
@@ -88,7 +115,10 @@ const RegisterUserForm = () => {
       {/* Login Link */}
       <p className="text-center text-sm text-gray-400">
         Already have an account?{" "}
-        <Link to={"/login"} className="cursor-pointer font-medium text-[#9929EA] hover:underline">
+        <Link
+          to="/login"
+          className="font-medium text-[#9929EA] hover:underline"
+        >
           Login
         </Link>
       </p>

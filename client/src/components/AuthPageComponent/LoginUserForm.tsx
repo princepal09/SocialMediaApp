@@ -2,6 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { loginSchema, type LoginFormData } from "../../schemas/loginSchema";
+import { useState } from "react";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 
 const LoginUserForm = () => {
   const {
@@ -12,6 +14,8 @@ const LoginUserForm = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const submitHandler = (data: LoginFormData) => {
     console.log(data);
@@ -60,13 +64,22 @@ const LoginUserForm = () => {
           </button>
         </div>
 
-        <input
-          {...register("password")}
-          id="password"
-          type="password"
-          placeholder="Enter your password"
-          className="w-full rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
-        />
+        <div className="relative">
+          <input
+            {...register("password")}
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Create a password"
+            className="w-full rounded-lg border border-gray-700 bg-[#1A1A1A] px-4 py-2.5 pr-12 text-white placeholder:text-gray-500 outline-none transition focus:border-[#9929EA]"
+          />
+
+          <span
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-white"
+          >
+            {showPassword ? <FaRegEye /> : <FaRegEyeSlash />}
+          </span>
+        </div>
 
         {errors.password && (
           <p className="text-sm text-red-500">{errors.password.message}</p>

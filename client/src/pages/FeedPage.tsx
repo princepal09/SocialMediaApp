@@ -19,16 +19,20 @@ const FeedPage = () => {
   }
 
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [loadingPosts, setloadingPosts] = useState<boolean>(false);
 
   console.log("Feed Posts", feedPosts);
 
   useEffect(() => {
     const getPosts = async () => {
+      setloadingPosts(true);
       try {
         const response = await getFeedPosts();
         setFeedPosts(response?.data);
       } catch (err: any) {
-        toast.error(err?.message);
+        toast.error(err?.message || "Failed to load error");
+      } finally {
+        setloadingPosts(false);
       }
     };
 
@@ -44,8 +48,15 @@ const FeedPage = () => {
 
       <div className="container flex text-white">
         <Sidebar />
-
-        {feedPosts.length > 0 && feedPosts.map((feedPost) => <FeedSection />)}
+        {loadingPosts ? (
+          <Spinner />
+        ) : feedPosts.length === 0 ? (
+          <p>No Posts Found</p>
+        ) : (
+          feedPosts.map((feedPost) => (
+            <FeedSection key={feedPost._id} post={feedPost} />
+          ))
+        )}
 
         <ChatBar />
       </div>

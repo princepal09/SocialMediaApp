@@ -1,9 +1,12 @@
+import { Post } from '../../types/post'
 
-import React from 'react'
+interface FeedSectionProp {
+    post : Post
+}
 
-const FeedSection = () => {
+const FeedSection = ({post} : FeedSectionProp) => {
   return (
-    <div>FeedSection</div>
+    <div>{post?.owner?.username}</div>
   )
 }
 

@@ -25,6 +25,8 @@ export interface Post {
   likesCount: number;
 }
 
+
+
 export interface FeedPostsResponse {
   data: Post[];
 }

@@ -9,11 +9,13 @@ interface IUser {
 interface AuthState {
   user: IUser | null;
   isAuthenticated: boolean;
+  loading : Boolean
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
+  loading : true
 };
 
 export const authSlice = createSlice({
@@ -23,6 +25,9 @@ export const authSlice = createSlice({
   reducers: {
     setUser(state, action: PayloadAction<IUser>) {
       ((state.user = action.payload), (state.isAuthenticated = true));
+    },
+    setAuthLoad(state){
+        state.loading = false;
     },
     logout(state) {
       state.user = null;

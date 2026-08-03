@@ -15,11 +15,15 @@ export const registerUser = async (data: RegisterFormData) => {
 
   const response = await api.post("/auth/register", formData);
 
-  return response.data;
+  return response?.data;
 };
 
+export const loginUser = async (data: LoginFormData) => {
+  const response = await api.post("/auth/login", data);
+  return response?.data;
+};
 
-export const loginUser = async(data : LoginFormData) =>{
-    const response = await api.post("/auth/login", data);
-    return response.data;
-}
+export const getCurrentUser = async () => {
+  const response = await api.get("/users/current-user");
+  return response?.data;
+};

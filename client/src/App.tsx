@@ -1,13 +1,13 @@
 import { Routes, Route } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import HomePage from "./pages/HomePage";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
 import { setLogout, setUser } from "./store/slices/authSlice";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
+import FeedPage from "./pages/FeedPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -42,7 +42,7 @@ const App = () => {
             path="/home"
             element={
               <ProtectedRoute>
-                <HomePage />
+                <FeedPage />
               </ProtectedRoute>
             }
           />

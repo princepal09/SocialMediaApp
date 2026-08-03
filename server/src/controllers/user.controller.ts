@@ -124,7 +124,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { identifier, password} = req.body;
+    const { identifier, password } = req.body;
     if (!identifier) {
       throw new ApiError(400, "Username or email is required");
     }
@@ -134,7 +134,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const user = await User.findOne({
-      $or: [{ email : identifier }, { username : identifier }],
+      $or: [{ email: identifier }, { username: identifier }],
     });
 
     if (!user) {

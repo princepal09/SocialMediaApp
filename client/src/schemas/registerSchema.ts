@@ -6,9 +6,13 @@ export const registerSchema = z.object({
     password : z.string().min(8, "Password must be at least 8 characters"),
      profileImage: z
     .any()
-    .refine((file) => file?.length > 0, {
-      message: "Profile image is required",
-    }),
+    .refine((file) => !file || file.length <= 1, {
+      message: "Only one profile picture is allowed",
+    })
+    .refine((file) => !file || file.length === 0 || ["image/jpeg", "image/png", "image/webp"].includes(file[0].type),
+    "Only Jpeg, PNG or WEBP Images are allowed",
+  ),
+
 })
 
 

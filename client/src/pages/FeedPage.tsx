@@ -38,14 +38,12 @@ const FeedPage = () => {
 
   return (
     <div>
-      <Navbar />
+      <Navbar handleLogout={handleLogout} />
 
       <div className="container text-white">
         <Sidebar />
 
-        <div>
-          {/* <h1>This is the feed page</h1> */}
-        </div>
+        <div>{/* <h1>This is the feed page</h1> */}</div>
       </div>
     </div>
   );

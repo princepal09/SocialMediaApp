@@ -5,7 +5,7 @@ import HomePage from "./pages/HomePage";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
-import { setUser } from "./store/slices/authSlice";
+import { setLoading, setUser } from "./store/slices/authSlice";
 
 const App = () => {
   const dispatch = useDispatch();

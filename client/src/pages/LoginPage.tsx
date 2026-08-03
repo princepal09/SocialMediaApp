@@ -2,7 +2,7 @@ import LoginUserForm from "../components/AuthPageComponent/LoginUserForm";
 
 const LoginPage = () => {
   return (
-    <div className="min-h-screen bg-black px-6 py-10">
+    <div className=" px-6 py-10">
       {/* Top Section */}
       <div className="flex flex-col items-center gap-3 pt-4">
         <h1 className="text-4xl md:text-5xl tracking-wider font-bold text-[#9929EA]">

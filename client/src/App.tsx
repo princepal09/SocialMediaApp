@@ -5,7 +5,9 @@ import HomePage from "./pages/HomePage";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
-import { setLoading, setUser } from "./store/slices/authSlice";
+import { setLogout, setUser } from "./store/slices/authSlice";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -15,6 +17,7 @@ const App = () => {
       const response = await getCurrentUser();
       dispatch(setUser(response?.data));
     } catch (err: any) {
+      dispatch(setLogout());
       console.log(err);
     }
   };
@@ -25,13 +28,43 @@ const App = () => {
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<RegisterPage />} />
-        <Route path="/home" element={<HomePage />} />
+      <div className="min-h-screen bg-[#000000]">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+        </Routes>
+      </div>
     </>
   );
 };

@@ -33,7 +33,8 @@ const LoginUserForm = () => {
       console.log("Login Response", response);
       dispatch(setUser(response?.data?.user));
       toast.success(response?.message);
-       navigate("/home");
+      reset();
+      navigate("/home");
     } catch (err: any) {
       console.log(err);
       toast.error(err?.message ?? "Something went wrong");

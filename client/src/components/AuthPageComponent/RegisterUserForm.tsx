@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   registerSchema,
   type RegisterFormData,
@@ -9,6 +9,8 @@ import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { registerUser } from "../../api/auth.api";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../store/slices/authSlice";
 
 const RegisterUserForm = () => {
   const {
@@ -20,6 +22,9 @@ const RegisterUserForm = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate()
+
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
@@ -28,8 +33,11 @@ const RegisterUserForm = () => {
     try {
       const response = await registerUser(data);
       console.log("Register Response", response);
+      dispatch(setUser(response?.data?.user));
       toast.success(response?.message);
       reset();
+      navigate("/home");
+      
     } catch (err: any) {
       toast.error(err?.message ?? "Something went wrong");
     }finally{

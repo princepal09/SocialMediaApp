@@ -1,11 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginSchema, type LoginFormData } from "../../schemas/loginSchema";
 import { useState } from "react";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { loginUser } from "../../api/auth.api";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../store/slices/authSlice";
 
 const LoginUserForm = () => {
   const {
@@ -17,6 +19,9 @@ const LoginUserForm = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const submitHandler = async (data: LoginFormData) => {
@@ -26,7 +31,9 @@ const LoginUserForm = () => {
       const response = await loginUser(data);
 
       console.log("Login Response", response);
+      dispatch(setUser(response?.data?.user));
       toast.success(response?.message);
+       navigate("/home");
     } catch (err: any) {
       console.log(err);
       toast.error(err?.message ?? "Something went wrong");

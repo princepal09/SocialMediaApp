@@ -1,49 +1,53 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import Spinner from "../components/general/Spinner";
-import { logout } from "../api/auth.api";
-import { toast } from "sonner";
-import { setLogout } from "../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+
 import Navbar from "../components/general/Navbar";
 import Sidebar from "../components/general/Sidebar";
+import ChatBar from "../components/general/ChatBar";
+import FeedSection from "../components/FeedPageComponents/FeedSection";
+import { useEffect, useState } from "react";
+import { Post } from "../types/post";
+import { getFeedPosts } from "../api/feed.api";
+import { toast } from "sonner";
 
 const FeedPage = () => {
-  const { user, loading } = useSelector((state: RootState) => state.auth);
+  const { loading } = useSelector((state: RootState) => state.auth);
 
   if (loading) {
     return <Spinner />;
   }
 
-  const navigate = useNavigate();
+  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
 
-  const dispatch = useDispatch();
+  console.log("Feed Posts", feedPosts);
 
-  const handleLogout = async () => {
-    try {
-      const response = await logout();
-      toast.success(response?.message || "Logged out successfully");
+  useEffect(() => {
+    const getPosts = async () => {
+      try {
+        const response = await getFeedPosts();
+        setFeedPosts(response?.data);
+      } catch (err: any) {
+        toast.error(err?.message);
+      }
+    };
 
-      dispatch(setLogout());
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to log out. Please try again.");
-      console.error(err);
-    }
-  };
-
+    getPosts();
+  }, []);
   if (loading) {
     return <Spinner />;
   }
 
   return (
-    <div>
-      <Navbar handleLogout={handleLogout} />
+    <div className="min-h-screen">
+      <Navbar />
 
-      <div className="container text-white">
+      <div className="container flex text-white">
         <Sidebar />
 
-        <div>{/* <h1>This is the feed page</h1> */}</div>
+        {feedPosts.length > 0 && feedPosts.map((feedPost) => <FeedSection />)}
+
+        <ChatBar />
       </div>
     </div>
   );

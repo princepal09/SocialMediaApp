@@ -1,28 +1,59 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { User2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../api/auth.api";
+import { toast } from "sonner";
+import { setLogout } from "../../store/slices/authSlice";
 
-interface NProps {
-  handleLogout: () => void;
-}
+const Navbar = () => {
+  const navigate = useNavigate();
 
-const Navbar = ({ handleLogout }: NProps) => {
+  const dispatch = useDispatch();
+  const handleLogout = async () => {
+    try {
+      const response = await logout();
+      toast.success(response?.message || "Logged out successfully");
+
+      dispatch(setLogout());
+      navigate("/login");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to log out. Please try again.");
+      console.error(err);
+    }
+  };
   const { user } = useSelector((state: RootState) => state.auth);
   return (
-    <nav className="text-white justify-between items-center flex md:px-20 md:py-4 border-2-b border-[#230737] shadow-[#230737]">
-      <h1 className="md:text-3xl font-bold text-[#9929EA]">Pixora</h1>
+    <nav className="text-white flex justify-between items-center md:px-20 px-4 py-4 border-[#230737]">
+      <h1 className="text-2xl md:text-3xl font-bold text-[#9929EA]">Pixora</h1>
 
-      {user?.profileImage ? (
-        <div className="flex justify-center items-center gap-4">
-          <img
-            className="w-[20px] rounded-full bg-cover"
-            src={user?.profileImage}
-          />
-          <span>{user?.username}</span>
-          <button onClick={handleLogout}>Logout</button>
+      {user ? (
+        <div className="flex items-center gap-3 md:gap-5">
+          {user.profileImage ? (
+            <img
+              src={user.profileImage}
+              alt={user.username}
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border border-[#9929EA]"
+            />
+          ) : (
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-700 flex items-center justify-center">
+              <User2 size={18} />
+            </div>
+          )}
+
+          <span className="hidden sm:block text-sm md:text-base font-medium">
+            {user.username}
+          </span>
+
+          <button
+            onClick={handleLogout}
+            className="px-3 md:px-4 py-1.5 md:py-2 rounded-md bg-red-500 hover:bg-[#8423c8] transition text-sm md:text-base"
+          >
+            Logout
+          </button>
         </div>
       ) : (
-        <User2 />
+        <User2 className="w-6 h-6" />
       )}
     </nav>
   );

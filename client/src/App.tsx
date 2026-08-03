@@ -39,7 +39,7 @@ const App = () => {
             }
           />
           <Route
-            path="/home"
+            path="/feed"
             element={
               <ProtectedRoute>
                 <FeedPage />

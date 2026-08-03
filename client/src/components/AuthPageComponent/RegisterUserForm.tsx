@@ -36,7 +36,7 @@ const RegisterUserForm = () => {
       dispatch(setUser(response?.data?.user));
       toast.success(response?.message);
       reset();
-      navigate("/home");
+      navigate("/feed");
       
     } catch (err: any) {
       toast.error(err?.message ?? "Something went wrong");

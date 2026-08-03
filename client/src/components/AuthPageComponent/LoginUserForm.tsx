@@ -34,7 +34,7 @@ const LoginUserForm = () => {
       dispatch(setUser(response?.data?.user));
       toast.success(response?.message);
       reset();
-      navigate("/home");
+      navigate("/feed");
     } catch (err: any) {
       console.log(err);
       toast.error(err?.message ?? "Something went wrong");

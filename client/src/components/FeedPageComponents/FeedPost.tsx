@@ -56,7 +56,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
     <section className="md:px-32 md:py-8 ">
       <div className="post-container flex flex-col gap-2">
         <div className="flex md:gap-2 items-center ">
-          {user?.profileImage ? (
+          {post?.owner?.profileImage ? (
             <img
               className="w-8 rounded-full object-cover aspect-square "
               src={post?.owner?.profileImage}
@@ -68,7 +68,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
           <span className="text-white">{post?.owner?.username}</span>
         </div>
 
-        <span className="text-xs text-white">
+        <span className="text-xs text-gray-400">
           {new Date(post?.createdAt).toLocaleString()}
         </span>
 
@@ -100,7 +100,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
           </div>
 
           {/* Comments */}
-          <div className="flex items-center cursor-pointer gap-2 text-white">
+          <div className="flex items-center cursor-pointer disabled:opacity-50 gap-2 hover:text-white/50 transition-all text-white">
             <MessageCircle size={20} />
             <span className="text-sm">{post?.commentsCount}</span>
           </div>

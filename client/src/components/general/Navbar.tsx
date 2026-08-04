@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { User2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../../api/auth.api";
 import { toast } from "sonner";
 import { setLogout } from "../../store/slices/authSlice";
@@ -25,7 +25,7 @@ const Navbar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
     <nav className="text-white flex justify-between items-center md:px-20 px-4 py-4 border-[#230737]">
-      <h1 className="text-2xl md:text-3xl font-bold text-[#9929EA]">Pixora</h1>
+      <Link to={"/"} className="text-2xl md:text-3xl font-bold text-[#9929EA]">Pixora</Link>
 
       {user ? (
         <div className="flex items-center gap-3 md:gap-5">

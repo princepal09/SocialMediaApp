@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { toggleLikePost } from "../../api/like.api";
 import { Heart, MessageCircle, User2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FeedPostProps {
   post: Post;
@@ -55,22 +56,38 @@ const FeedPost = ({ post }: FeedPostProps) => {
   return (
     <section className="md:px-32 md:py-8 ">
       <div className="post-container flex flex-col gap-2">
-        <div className="flex md:gap-2 items-center ">
-          {post?.owner?.profileImage ? (
-            <img
-              className="w-8 rounded-full object-cover aspect-square "
-              src={post?.owner?.profileImage}
-            />
-          ) : (
-            <User2 className="text-white" />
-          )}
+        <div className="flex flex-col gap-3">
+          {/* Upper Row */}
+          <div className="flex items-center gap-x-3">
+            <Link to={`/profile/${post?.owner?.username}`}>
+              {post?.owner?.profileImage ? (
+                <img
+                  src={post?.owner?.profileImage}
+                  className="w-8 h-8 rounded-full object-cover"
+                  alt={post?.owner?.username}
+                />
+              ) : (
+                <User2 className="w-8 h-8 text-white" />
+              )}
+            </Link>
+              <div className="flex items-center">
+            <Link to={`/profile/${post?.owner?.username}`}>
+              <span className="text-white font-medium">
+                {post?.owner?.username}
+              </span>
+            </Link>
+          </div>
+           </div>
 
-          <span className="text-white">{post?.owner?.username}</span>
+          
+
+          {/* Bottom Row */}
+            <span className="text-[10px] text-gray-400 mt-1">
+              {new Date(post?.createdAt).toLocaleString()}
+            </span>
+         
+        
         </div>
-
-        <span className="text-xs text-gray-400">
-          {new Date(post?.createdAt).toLocaleString()}
-        </span>
 
         {post.image && (
           <div className="md:my-2">

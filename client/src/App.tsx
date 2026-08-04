@@ -8,6 +8,7 @@ import { setLogout, setUser } from "./store/slices/authSlice";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 import FeedPage from "./pages/FeedPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -61,6 +62,14 @@ const App = () => {
               <PublicRoute>
                 <LoginPage />
               </PublicRoute>
+            }
+          />
+          <Route
+            path="/profile/:username"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
             }
           />
         </Routes>

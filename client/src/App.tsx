@@ -28,7 +28,7 @@ const App = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#000000]">
+      <div className="min-h-screen w-full overflow-x-hidden bg-[#000000]">
         <Routes>
           <Route
             path="/"

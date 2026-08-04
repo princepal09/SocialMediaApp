@@ -48,7 +48,7 @@ const FeedPage = () => {
 
       <div className="containern flex text-white">
         <Sidebar />
-        <div className="flex-1 overflow-y-auto flex-col ">
+        <div className="flex-1 feed-container overflow-y-auto flex-col ">
           {loadingPosts ? (
             <Spinner />
           ) : feedPosts.length === 0 ? (

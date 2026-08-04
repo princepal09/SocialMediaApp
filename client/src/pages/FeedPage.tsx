@@ -5,11 +5,11 @@ import Spinner from "../components/general/Spinner";
 import Navbar from "../components/general/Navbar";
 import Sidebar from "../components/general/Sidebar";
 import ChatBar from "../components/general/ChatBar";
-import FeedSection from "../components/FeedPageComponents/FeedSection";
 import { useEffect, useState } from "react";
 import { Post } from "../types/post";
 import { getFeedPosts } from "../api/feed.api";
 import { toast } from "sonner";
+import FeedPost from "../components/FeedPageComponents/FeedPost";
 
 const FeedPage = () => {
   const { loading } = useSelector((state: RootState) => state.auth);
@@ -46,17 +46,19 @@ const FeedPage = () => {
     <div className="min-h-screen">
       <Navbar />
 
-      <div className="container flex text-white">
+      <div className="containern flex text-white">
         <Sidebar />
-        {loadingPosts ? (
-          <Spinner />
-        ) : feedPosts.length === 0 ? (
-          <p>No Posts Found</p>
-        ) : (
-          feedPosts.map((feedPost) => (
-            <FeedSection key={feedPost._id} post={feedPost} />
-          ))
-        )}
+        <div className="flex-1 overflow-y-auto flex-col ">
+          {loadingPosts ? (
+            <Spinner />
+          ) : feedPosts.length === 0 ? (
+            <p>No Posts Found</p>
+          ) : (
+            feedPosts.map((feedPost) => (
+              <FeedPost key={feedPost._id} post={feedPost} />
+            ))
+          )}
+        </div>
 
         <ChatBar />
       </div>

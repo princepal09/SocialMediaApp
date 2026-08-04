@@ -2,7 +2,7 @@ import React from 'react'
 
 const ChatBar = () => {
   return (
-    <div>ChatBar</div>
+    <div className='min-w-[20vw] shadow-xl shadow-[#9929EA]'>ChatBar</div>
   )
 }
 

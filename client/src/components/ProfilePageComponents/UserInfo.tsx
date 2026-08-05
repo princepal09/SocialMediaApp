@@ -1,4 +1,3 @@
-import { User2 } from "lucide-react";
 import { IUserProfileInfo } from "../../types/userProfile";
 
 interface UserInfoProps {

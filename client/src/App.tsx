@@ -9,6 +9,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
+import ErrorPage from "./pages/ErrorPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -72,6 +73,8 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+           {/* 404 Route - Keep this last */}
+        <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
     </>

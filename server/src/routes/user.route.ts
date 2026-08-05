@@ -19,7 +19,7 @@ router.patch("/change-password", verifyUser, changeCurrentPassword);
 router.post("/follow/:username", verifyUser, followUser);
 router.post("/unfollow/:username", verifyUser, unfollowUser);
 router.post("/add-bio", verifyUser, addBio);
-router.get("/get-user-profile-data/:username", getUserProfileData);
+router.get("/get-user-profile-data/:username", verifyUser, getUserProfileData);
 router.patch("/update-bio", verifyUser, updateBio);
 router.patch(
   "/update-profile",

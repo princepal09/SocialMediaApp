@@ -534,6 +534,11 @@ export const getUserProfileData = async (req: Request, res: Response) => {
     if (!username) {
       throw new ApiError(401, "Unauthorized");
     }
+    const loggedInUserId = req.user?.id
+      ? new mongoose.Types.ObjectId(req.user.id)
+      : null;
+    // console.log("loggedInUserId", loggedInUserId);
+    // console.log("TYPE", typeof loggedInUserId);
 
     const profileData = await User.aggregate([
       {
@@ -541,7 +546,6 @@ export const getUserProfileData = async (req: Request, res: Response) => {
           username: username,
         },
       },
-
       {
         $lookup: {
           from: "posts",
@@ -550,28 +554,26 @@ export const getUserProfileData = async (req: Request, res: Response) => {
           as: "posts",
         },
       },
-
+      {
+        $addFields: {
+          postCount: { $size: "$posts" },
+          followersCount: { $size: "$followers" },
+          followingCount: { $size: "$following" },
+          isFollowing: loggedInUserId
+            ? { $in: [loggedInUserId, "$followers"] }
+            : false,
+        },
+      },
       {
         $project: {
           username: 1,
           email: 1,
           bio: 1,
           profileImage: 1,
-          followersCount: {
-            $size: {
-              $ifNull: ["$followers", []],
-            },
-          },
-          followingCount: {
-            $size: {
-              $ifNull: ["$following", []],
-            },
-          },
-          postCount: {
-            $size: {
-              $ifNull: ["$posts", []],
-            },
-          },
+          postCount: 1,
+          followersCount: 1,
+          followingCount: 1,
+          isFollowing: 1,
         },
       },
     ]);
@@ -703,6 +705,8 @@ export const followUser = async (req: Request, res: Response) => {
 };
 
 export const unfollowUser = async (req: Request, res: Response) => {
+  let session: mongoose.ClientSession | null = null;
+
   try {
     const loggedInUserId = req.user?._id;
     const { username } = req.params;
@@ -711,30 +715,55 @@ export const unfollowUser = async (req: Request, res: Response) => {
       throw new ApiError(401, "Logged In User not found");
     }
 
-    if (!username) {
-      throw new ApiError(401, "username not found");
-    }
+    session = await mongoose.startSession();
+    session.startTransaction();
 
-    const userToBeUnfollowed = await User.findOne({ username });
+    const userToBeUnfollowed = await User.findOne({ username }).session(
+      session
+    );
+
     if (!userToBeUnfollowed) {
       throw new ApiError(404, "User not found");
     }
 
+    // Prevent self-unfollow
     if (userToBeUnfollowed._id.equals(loggedInUserId)) {
-      throw new ApiError(400, "You cannot follow yourself");
+      throw new ApiError(400, "You cannot unfollow yourself");
     }
 
-    await User.findByIdAndUpdate(userToBeUnfollowed._id, {
-      $pull: {
-        followers: userToBeUnfollowed._id,
-      },
-    });
+    // Check if actually following
+    const isFollowing = await User.exists({
+      _id: loggedInUserId,
+      following: userToBeUnfollowed._id,
+    }).session(session);
 
-    await User.findByIdAndUpdate(loggedInUserId, {
-      $pull: {
-        following: userToBeUnfollowed._id,
+    if (!isFollowing) {
+      throw new ApiError(400, "You are not following this user");
+    }
+
+    // Remove logged-in user from target user's followers
+    await User.findByIdAndUpdate(
+      userToBeUnfollowed._id,
+      {
+        $pull: {
+          followers: loggedInUserId,
+        },
       },
-    });
+      { session }
+    );
+
+    // Remove target user from logged-in user's following
+    await User.findByIdAndUpdate(
+      loggedInUserId,
+      {
+        $pull: {
+          following: userToBeUnfollowed._id,
+        },
+      },
+      { session }
+    );
+
+    await session.commitTransaction();
 
     return res
       .status(200)
@@ -742,10 +771,14 @@ export const unfollowUser = async (req: Request, res: Response) => {
         new ApiResponse(
           200,
           null,
-          `You Unfollowed ${userToBeUnfollowed.username}`
+          `You unfollowed ${userToBeUnfollowed.username}`
         )
       );
   } catch (err: any) {
+    if (session) {
+      await session.abortTransaction();
+    }
+
     console.error(err);
 
     if (err instanceof ApiError) {
@@ -756,10 +789,15 @@ export const unfollowUser = async (req: Request, res: Response) => {
         errors: err.errors,
       });
     }
+
     return res.status(500).json({
       status: 500,
       success: false,
       message: "Internal Server Error",
     });
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
   }
 };

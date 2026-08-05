@@ -7,6 +7,7 @@ export interface IUserProfileInfo {
   followersCount: number;
   followingCount: number;
   bio?: string;
+  isFollowing : boolean
 }
 
 export interface PostOwner {

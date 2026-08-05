@@ -27,6 +27,7 @@ const UserProfileContainer = () => {
 
       try {
         const response = await getUserProfileInfo(username);
+        // console.log("userProfileInfo", response.data)
         setUserProfileInfo(response.data);
       } catch (err: any) {
         toast.error(err.message || "Failed to fetch profile");

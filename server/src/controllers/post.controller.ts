@@ -200,6 +200,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
     }
 
     const userPosts = await Post.aggregate([
+      // Fetch post owner
       {
         $lookup: {
           from: "users",
@@ -211,6 +212,8 @@ export const getUserPosts = async (req: Request, res: Response) => {
       {
         $unwind: "$owner",
       },
+
+      // Match by username
       {
         $match: {
           "owner.username": username,
@@ -282,8 +285,12 @@ export const getUserPosts = async (req: Request, res: Response) => {
           content: 1,
           image: 1,
           createdAt: 1,
+
           commentCount: 1,
           likesCount: 1,
+
+          // Return only the ObjectIds of users who liked the post
+          likes: 1,
 
           owner: {
             _id: "$owner._id",
@@ -316,7 +323,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
         },
       },
     ]);
-    
+
     return res
       .status(200)
       .json(new ApiResponse(200, userPosts, "User Posts Fetched Successfully"));

@@ -27,6 +27,7 @@ export interface Post {
   commentCount: number;
   likesCount : number
   comments: Comment[];
+  likes : string[]
 }
 
 export type PostsResponse = Post[];

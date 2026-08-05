@@ -1,58 +1,60 @@
 import { useEffect, useState } from "react";
-import UserInfo from "./UserInfo";
-import { IUserProfileInfo } from "../../types/userProfile";
 import { useParams } from "react-router-dom";
-import { getUserProfileInfo, geUserPosts } from "../../api/userProfile.api";
 import { toast } from "sonner";
-import Spinner from "../general/Spinner";
+
+import UserInfo from "./UserInfo";
 import UserPosts from "./UserPosts";
-import { PostsResponse } from "../../types/userProfile";
+import Spinner from "../general/Spinner";
+
+import { getUserProfileInfo, geUserPosts } from "../../api/userProfile.api";
+import { IUserProfileInfo, PostsResponse } from "../../types/userProfile";
 
 const UserProfileContainer = () => {
   const { username } = useParams<{ username: string }>();
+
   const [userProfileInfo, setUserProfileInfo] =
     useState<IUserProfileInfo | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   const [userPosts, setUserPosts] = useState<PostsResponse | null>(null);
-  const [userPostLoading, setuserPostLoading] = useState<boolean>(false);
+  const [userPostLoading, setUserPostLoading] = useState(false);
 
   useEffect(() => {
     if (!username) return;
-    const getUserProfileData = async () => {
+
+    const fetchProfile = async () => {
       setLoading(true);
+
       try {
         const response = await getUserProfileInfo(username);
-        console.log(response);
-        setUserProfileInfo(response?.data);
+        setUserProfileInfo(response.data);
       } catch (err: any) {
-        console.log("Failed to fetch profile", err);
-        toast.error(err.message || "Failed to fetch the user");
+        toast.error(err.message || "Failed to fetch profile");
       } finally {
         setLoading(false);
       }
     };
 
-    getUserProfileData();
+    fetchProfile();
   }, [username]);
 
-  const getPostUser = async () => {
-    if (!username) return;
-    setuserPostLoading(true);
-    try {
-      const response = await geUserPosts(username);
-      // console.log("getPOst User", response.data);
-      setUserPosts(response.data);
-    } catch (err: any) {
-      toast.error(err.message);
-      console.log("GET USER POST", err);
-    } finally {
-      setuserPostLoading(false);
-    }
-  };
-
   useEffect(() => {
-    getPostUser();
+    if (!username) return;
+
+    const fetchPosts = async () => {
+      setUserPostLoading(true);
+
+      try {
+        const response = await geUserPosts(username);
+        setUserPosts(response.data);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to fetch posts");
+      } finally {
+        setUserPostLoading(false);
+      }
+    };
+
+    fetchPosts();
   }, [username]);
 
   if (loading) {
@@ -60,13 +62,24 @@ const UserProfileContainer = () => {
   }
 
   if (!userProfileInfo) {
-    return <div className="min-w-[64w] text-white p-6">User not found</div>;
+    return (
+      <div className="h-full flex items-center justify-center text-white">
+        User not found
+      </div>
+    );
   }
-  return (
-    <div className="min-w-[64vw] flex-col flex">
-      <UserInfo user={userProfileInfo} />
 
-      {userPostLoading ? <Spinner /> : <UserPosts userPosts={userPosts} />}
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="min-w-[64vw] pb-6">
+        <UserInfo user={userProfileInfo} />
+
+        {userPostLoading ? (
+          <Spinner />
+        ) : (
+          <UserPosts userPosts={userPosts} />
+        )}
+      </div>
     </div>
   );
 };

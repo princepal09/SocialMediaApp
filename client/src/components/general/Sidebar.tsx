@@ -1,11 +1,9 @@
-import React from 'react'
-
 const Sidebar = () => {
   return (
-    <div className='text-white h-full w-65  shadow-xl shadow-[#9929EA]'>
-         Sidebar
-    </div>
-  )
-}
+    <aside className="w-64 shrink-0 h-full border-r border-zinc-800 text-white">
+      Sidebar
+    </aside>
+  );
+};
 
-export default Sidebar
+export default Sidebar;

@@ -25,6 +25,7 @@ export interface Post {
   owner: PostOwner;
   createdAt: string; 
   commentCount: number;
+  likesCount : number
   comments: Comment[];
 }
 

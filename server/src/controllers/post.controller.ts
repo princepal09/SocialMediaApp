@@ -268,6 +268,12 @@ export const getUserPosts = async (req: Request, res: Response) => {
           commentCount: {
             $size: "$comments",
           },
+
+          likesCount: {
+            $size: {
+              $ifNull: ["$likes", []],
+            },
+          },
         },
       },
 
@@ -277,6 +283,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
           image: 1,
           createdAt: 1,
           commentCount: 1,
+          likesCount: 1,
 
           owner: {
             _id: "$owner._id",
@@ -309,7 +316,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
         },
       },
     ]);
-
+    
     return res
       .status(200)
       .json(new ApiResponse(200, userPosts, "User Posts Fetched Successfully"));
@@ -429,4 +436,3 @@ export const deletePost = async (req: Request, res: Response) => {
     });
   }
 };
-

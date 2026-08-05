@@ -1,9 +1,9 @@
-import React from 'react'
-
 const ChatBar = () => {
   return (
-    <div className='w-75 h-full shadow-xl shadow-[#9929EA]'>ChatBar</div>
-  )
-}
+    <aside className="w-72 shrink-0 h-full border-l border-zinc-800 text-white">
+      ChatBar
+    </aside>
+  );
+};
 
-export default ChatBar
+export default ChatBar;

@@ -21,10 +21,9 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [showComments, setShowComments] = useState<boolean>(false);
-  const [comments, setComments] = useState<CommentType []>([]);
-  const [commentText, setcommentText] = useState("")
+  const [comments, setComments] = useState<CommentType[]>([]);
+  const [commentText, setcommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
-
 
   const isLikedByMe = user ? likes.includes(user._id) : false;
 
@@ -61,50 +60,44 @@ const FeedPost = ({ post }: FeedPostProps) => {
     }
   };
 
-
-  const fetchComments = async() =>{
-    setLoadingComments(true)
-     try{
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
       const response = await getCommentByPostId(post._id);
-      return response?.data
-      
-     }catch(err:any){
-      console.log(err?.message)
-     }finally{
+      return response?.data;
+    } catch (err: any) {
+      console.log(err?.message);
+    } finally {
       setLoadingComments(false);
-     }
-  }
+    }
+  };
 
-  const handleToggleComments = () =>{
-    setShowComments((prev) => !prev)
-    if(!showComments){
+  const handleToggleComments = () => {
+    setShowComments((prev) => !prev);
+    if (!showComments) {
       fetchComments();
     }
-  }
+  };
 
-  const handleAddComments = async() =>{
-    if(!user){
-      toast.error("Login to comment")
+  const handleAddComments = async () => {
+    if (!user) {
+      toast.error("Login to comment");
       return;
     }
 
-    if(!commentText.trim()){
+    if (!commentText.trim()) {
       toast.error("Comment cannot be empty");
       return;
     }
 
-
-    try{
-
+    try {
       const newComment = await createComment(post._id, commentText);
       setComments((prev) => [newComment, ...prev]);
       setcommentText("");
-
-    }catch(err:any){
-      toast.error(err.message || "Failed to add comment")
-
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add comment");
     }
-  }
+  };
 
   return (
     <section className="md:px-32 md:py-8 ">
@@ -123,23 +116,19 @@ const FeedPost = ({ post }: FeedPostProps) => {
                 <User2 className="w-8 h-8 text-white" />
               )}
             </Link>
-              <div className="flex items-center">
-            <Link to={`/profile/${post?.owner?.username}`}>
-              <span className="text-white font-medium">
-                {post?.owner?.username}
-              </span>
-            </Link>
+            <div className="flex items-center">
+              <Link to={`/profile/${post?.owner?.username}`}>
+                <span className="text-white font-medium">
+                  {post?.owner?.username}
+                </span>
+              </Link>
+            </div>
           </div>
-           </div>
-
-          
 
           {/* Bottom Row */}
-            <span className="text-[10px] text-gray-400 mt-1">
-              {new Date(post?.createdAt).toLocaleString()}
-            </span>
-         
-        
+          <span className="text-[10px] text-gray-400 mt-1">
+            {new Date(post?.createdAt).toLocaleString()}
+          </span>
         </div>
 
         {post.image && (

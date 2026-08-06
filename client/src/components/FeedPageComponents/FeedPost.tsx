@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { toggleLikePost } from "../../api/like.api";
 import { Heart, MessageCircle, User2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { CommentType } from "../../types/comment";
+import { createComment, getCommentByPostId } from "../../api/comment.api";
 
 interface FeedPostProps {
   post: Post;
@@ -17,6 +19,12 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const [likeCount, setLikeCount] = useState<number>(post.likesCount);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const [showComments, setShowComments] = useState<boolean>(false);
+  const [comments, setComments] = useState<CommentType []>([]);
+  const [commentText, setcommentText] = useState("")
+  const [loadingComments, setLoadingComments] = useState(false);
+
 
   const isLikedByMe = user ? likes.includes(user._id) : false;
 
@@ -52,6 +60,51 @@ const FeedPost = ({ post }: FeedPostProps) => {
       setLoading(false);
     }
   };
+
+
+  const fetchComments = async() =>{
+    setLoadingComments(true)
+     try{
+      const response = await getCommentByPostId(post._id);
+      return response?.data
+      
+     }catch(err:any){
+      console.log(err?.message)
+     }finally{
+      setLoadingComments(false);
+     }
+  }
+
+  const handleToggleComments = () =>{
+    setShowComments((prev) => !prev)
+    if(!showComments){
+      fetchComments();
+    }
+  }
+
+  const handleAddComments = async() =>{
+    if(!user){
+      toast.error("Login to comment")
+      return;
+    }
+
+    if(!commentText.trim()){
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+
+    try{
+
+      const newComment = await createComment(post._id, commentText);
+      setComments((prev) => [newComment, ...prev]);
+      setcommentText("");
+
+    }catch(err:any){
+      toast.error(err.message || "Failed to add comment")
+
+    }
+  }
 
   return (
     <section className="md:px-32 md:py-8 ">

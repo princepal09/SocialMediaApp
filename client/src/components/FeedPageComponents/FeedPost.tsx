@@ -8,6 +8,7 @@ import { Heart, MessageCircle, User2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CommentType } from "../../types/comment";
 import { createComment, getCommentByPostId } from "../../api/comment.api";
+import Spinner from "../general/Spinner";
 
 interface FeedPostProps {
   post: Post;
@@ -159,11 +160,36 @@ const FeedPost = ({ post }: FeedPostProps) => {
           </div>
 
           {/* Comments */}
-          <div className="flex items-center cursor-pointer disabled:opacity-50 gap-2 hover:text-white/50 transition-all text-white">
+          {/* <div className="flex items-center cursor-pointer disabled:opacity-50 gap-2 hover:text-white/50 transition-all text-white">
             <MessageCircle size={20} />
             <span className="text-sm">{post?.commentsCount}</span>
-          </div>
+          </div> */}
+
+          <button onClick={handleToggleComments} className="flex items-center gap-1 cursor-pointer text-white/50 hover:text-white transition-all">
+               <MessageCircle size={20}/>
+               <span className="text-sm">{post?.commentsCount}</span>
+          </button>
         </div>
+
+        {/* Comments Section  */}
+
+        {
+          showComments && (
+            <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+              {loadingComments ? (<Spinner fullScreen={false} />) : comments.length === 0 ? (<p className="text-white/60 text-sm">No Comments Yet</p>) : (
+                comments?.map((comment) => (
+                  <div className="flex items-center gap-2" key={comment._id}>
+                    <img className="w-8 h-8 rounded-full object-cover" src={comment.commentedBy.profileImage}/>
+
+
+                  </div>
+
+                ))
+              )}
+
+            </div>
+          )
+        }
       </div>
     </section>
   );

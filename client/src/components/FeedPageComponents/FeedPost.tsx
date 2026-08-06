@@ -165,31 +165,35 @@ const FeedPost = ({ post }: FeedPostProps) => {
             <span className="text-sm">{post?.commentsCount}</span>
           </div> */}
 
-          <button onClick={handleToggleComments} className="flex items-center gap-1 cursor-pointer text-white/50 hover:text-white transition-all">
-               <MessageCircle size={20}/>
-               <span className="text-sm">{post?.commentsCount}</span>
+          <button
+            onClick={handleToggleComments}
+            className="flex items-center gap-1 cursor-pointer text-white/50 hover:text-white transition-all"
+          >
+            <MessageCircle size={20} />
+            <span className="text-sm">{post?.commentsCount}</span>
           </button>
         </div>
 
         {/* Comments Section  */}
 
-        {
-          showComments && (
-            <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
-              {loadingComments ? (<Spinner fullScreen={false} />) : comments.length === 0 ? (<p className="text-white/60 text-sm">No Comments Yet</p>) : (
-                comments?.map((comment) => (
-                  <div className="flex items-center gap-2" key={comment._id}>
-                    <img className="w-8 h-8 rounded-full object-cover" src={comment.commentedBy.profileImage}/>
-
-
-                  </div>
-
-                ))
-              )}
-
-            </div>
-          )
-        }
+        {showComments && (
+          <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+            {loadingComments ? (
+              <Spinner fullScreen={false} />
+            ) : comments.length === 0 ? (
+              <p className="text-white/60 text-sm">No Comments Yet</p>
+            ) : (
+              comments?.map((comment) => (
+                <div className="flex items-center gap-2" key={comment._id}>
+                  <img
+                    className="w-8 h-8 rounded-full object-cover"
+                    src={comment?.commentedBy?.profileImage}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

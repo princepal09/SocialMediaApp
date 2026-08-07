@@ -26,3 +26,13 @@ export const  updateProfileImage = async(formData:FormData) =>{
     const response = await api.patch(`users/update-profile`, formData);
     return response.data;
 }
+
+export const addBio = async(bio:string) =>{
+    const response = await api.post("/users/add-bio", {bio});
+    return response.data;
+}
+
+export const updateBio = async(updateBio:string) =>{
+    const response = await api.patch("/users/update-bio", {updateBio});
+    return response.data;
+}

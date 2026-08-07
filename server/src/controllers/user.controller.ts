@@ -424,8 +424,8 @@ export const addBio = async (req: Request, res: Response) => {
 
 export const updateBio = async (req: Request, res: Response) => {
   try {
-    const updatedBio = req.body;
-    if (!updateBio || updatedBio === "") {
+    const updateBio = req.body;
+    if (!updateBio || updateBio === "") {
       throw new ApiError(400, "Bio is required");
     }
 
@@ -434,7 +434,7 @@ export const updateBio = async (req: Request, res: Response) => {
     const user = await User.findByIdAndUpdate(
       userId,
       {
-        $set: { bio: updatedBio },
+        $set: { bio: updateBio },
       },
       {
         new: true,

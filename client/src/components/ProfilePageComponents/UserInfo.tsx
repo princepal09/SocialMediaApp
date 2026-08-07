@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IUserProfileInfo } from "../../types/userProfile";
 import { toast } from "sonner";
 import {
@@ -28,10 +28,17 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isOwnProfile = loggedInUser?.username === user.username;
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [bio, setBioInput] = useState(user.bio || "");
+
   const dispatch = useDispatch();
   const handlePickImage = () => {
     fileInputRef.current?.click();
   };
+
+  useEffect(() => {
+    setBioInput(user.bio || "");
+  }, [user]);
 
   const handleProfileImageChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -105,41 +112,70 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
     <div className="w-full max-w-5xl mx-auto px-6 py-5">
       {/* Header */}
 
-      <div className="flex items-center gap-5">
-        {/* Profile Image */}
-        <div className="relative w-20 h-20">
-          <img
-            src={user?.profileImage || "/defaultProfile.png"}
-            alt={user?.username}
-            className="w-20 h-20 rounded-full object-cover border-2 border-violet-500 shadow-[0_0_25px_rgba(168,85,247,0.8)]"
-          />
+      <div className="flex items-center justify-between">
+        {/* Left Side */}
+        <div className="flex items-center gap-5">
+          {/* Profile Image */}
+          <div className="relative w-20 h-20">
+            <img
+              src={user?.profileImage || "/defaultProfile.png"}
+              alt={user?.username}
+              className="w-20 h-20 rounded-full object-cover border-2 border-violet-500 shadow-[0_0_25px_rgba(168,85,247,0.8)]"
+            />
 
-          {isOwnProfile && (
+            {isOwnProfile && (
+              <button
+                type="button"
+                onClick={handlePickImage}
+                disabled={imageUploading}
+                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white hover:bg-gray-100 text-black flex items-center justify-center border border-gray-300 shadow-md transition-all duration-200 hover:scale-105"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleProfileImageChange}
+            />
+          </div>
+
+          {/* User Info */}
+          <div>
+            <h1 className="text-2xl font-bold text-white">@{user?.username}</h1>
+
+            <p className="text-sm text-zinc-400">{user?.email}</p>
+          </div>
+        </div>
+
+        {/* Right Side */}
+        {!isOwnProfile && (
+          <div className="flex gap-3">
             <button
-              type="button"
-              onClick={handlePickImage}
-              disabled={imageUploading}
-              className="absolute bottom-0 cursor-pointer right-0 w-7 h-7 rounded-full bg-white hover:bg-gray-100 text-black flex items-center justify-center border border-gray-300 shadow-md transition-all duration-200 hover:scale-105"
+              onClick={handleFollowToggle}
+              disabled={loading}
+              className={`
+          px-5 py-2 rounded-xl text-sm font-medium text-white
+          transition-all duration-300 active:scale-95
+          disabled:opacity-60 disabled:cursor-not-allowed
+          ${
+            isFollowing
+              ? "bg-zinc-700 hover:bg-red-600"
+              : "bg-violet-600 hover:bg-violet-700"
+          }
+        `}
             >
-              <Pencil size={14} />
+              {loading ? "Please wait..." : isFollowing ? "Unfollow" : "Follow"}
             </button>
-          )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleProfileImageChange}
-          />
-        </div>
-
-        {/* User Info */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">@{user?.username}</h1>
-
-          <p className="text-sm text-zinc-400">{user?.email}</p>
-        </div>
+            <button className="px-5 py-2 rounded-xl border border-zinc-700 text-white text-sm hover:bg-zinc-900 transition">
+              Message
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bio */}

@@ -9,15 +9,15 @@ import mongoose from "mongoose";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
-    const profileImagePath = req.file?.path;
+    const postImagePath  = req.file?.path;
     console.log("Body:", req.body);
     console.log("File:", req.file);
     const { content } = req.body;
     const userId = req.user?.id;
     let imageUrl;
 
-    if (profileImagePath) {
-      imageUrl = await uploadToCloudinary(profileImagePath);
+    if (postImagePath ) {
+      imageUrl = await uploadToCloudinary(postImagePath);
     }
 
     const user = await User.findById(userId);

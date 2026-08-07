@@ -21,3 +21,8 @@ export const unfollowUser = async(username :string) =>{
     const response = await api.post(`/users/unfollow/${username}`)
     return response.data;
 }
+
+export const  updateProfileImage = async(formData:FormData) =>{
+    const response = await api.patch(`users/update-profile`, formData);
+    return response.data;
+}

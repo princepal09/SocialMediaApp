@@ -1,17 +1,57 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { IUserProfileInfo } from "../../types/userProfile";
 import { toast } from "sonner";
-import { followUser, unfollowUser } from "../../api/userProfile.api";
+import { followUser, unfollowUser, updateProfileImage } from "../../api/userProfile.api";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { Pencil } from "lucide-react";
 
 interface UserInfoProps {
   user: IUserProfileInfo;
+  refetchProfile?: () => void;
 }
 
 const UserInfo = ({ user }: UserInfoProps) => {
+  const loggedInUser = useSelector((state: RootState) => state.auth.user);
   const [isFollowing, setIsFollowing] = useState<boolean>(user.isFollowing);
-  console.log(isFollowing)
+  // console.log(isFollowing);
   const [followersCount, setFollowersCount] = useState(user.followersCount);
   const [loading, setLoading] = useState<boolean>(false);
+  const [imageUploading, setImageUploading] = useState<boolean>(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isOwnProfile = loggedInUser?.username === user.username;
+
+
+  const handlePickImage = () =>{
+    fileInputRef.current?.click();
+  }
+
+  const handleProfileImageChange = async(e:React.ChangeEvent<HTMLInputElement>) =>{
+    const file = e.target.files?.[0];
+
+    if(!file){
+      return;
+    }
+
+    if(!file.type.startsWith("image/")){
+      toast.error("Please select a valid image");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("profileImage", file);
+    setImageUploading(false);
+    try{
+      await updateProfileImage(formData);
+      toast.success("Profile Image updated Successfully");
+    }catch(err:any){
+      toast.error(err?.message);
+
+    }finally{
+        setImageUploading(false);
+    }
+
+  }
 
   const handleFollowToggle = async () => {
     setLoading(true);
@@ -41,7 +81,7 @@ const UserInfo = ({ user }: UserInfoProps) => {
         <div className="flex flex-col gap-4">
           {/* Avatar */}
           <img
-            src={user?.profileImage || "/avatar1.jpg"}
+            src={user?.profileImage || "/defaultProfile.png"}
             alt={user?.username}
             className="w-20 h-20 rounded-full object-cover border-2 border-violet-500 shadow-[0_0_25px_rgba(168,85,247,0.8)]"
           />
@@ -54,6 +94,14 @@ const UserInfo = ({ user }: UserInfoProps) => {
 
             <p className="text-sm text-zinc-400">{user?.email}</p>
           </div>
+          {
+            isOwnProfile && (
+              <button className="absolute bottom-0 right-0  ">
+                <Pencil size={14}/>
+              </button>
+            )
+          }
+          <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleProfileImageChange}/>
         </div>
 
         {/* Buttons */}
@@ -106,9 +154,7 @@ const UserInfo = ({ user }: UserInfoProps) => {
         </div>
 
         <div className="rounded-2xl bg-zinc-900 border border-zinc-800 py-4 text-center">
-          <h2 className="text-2xl font-bold text-white">
-            {followersCount}
-          </h2>
+          <h2 className="text-2xl font-bold text-white">{followersCount}</h2>
 
           <p className="text-[11px] tracking-widest uppercase text-zinc-500">
             Followers

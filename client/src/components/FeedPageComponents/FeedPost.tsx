@@ -238,7 +238,8 @@ const FeedPost = ({ post }: FeedPostProps) => {
                       </div>
                     </div>
                     {canDelete && (
-                      <button disabled={deleteLoading}
+                      <button
+                        disabled={deleteLoading}
                         onClick={() => handleDeleteComment(comment._id)}
                         className="text-red-400 hover:text-red-500 transition"
                       >
@@ -260,7 +261,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
               />
               <button
                 disabled={createCommentLoading}
-                onClick={handleAddComment} 
+                onClick={handleAddComment}
                 className="bg-blue-600 cursor-pointer px-4 rounded-md text-white"
               >
                 {createCommentLoading ? "Posting" : "Post"}

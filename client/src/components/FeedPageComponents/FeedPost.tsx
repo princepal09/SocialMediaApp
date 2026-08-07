@@ -4,10 +4,14 @@ import { RootState } from "../../store/store";
 import { useState } from "react";
 import { toast } from "sonner";
 import { toggleLikePost } from "../../api/like.api";
-import { Heart, MessageCircle, User2 } from "lucide-react";
+import { Heart, MessageCircle, Trash2, User2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CommentType } from "../../types/comment";
-import { createComment, getCommentByPostId } from "../../api/comment.api";
+import {
+  createComment,
+  deleteComment,
+  getCommentByPostId,
+} from "../../api/comment.api";
 import Spinner from "../general/Spinner";
 
 interface FeedPostProps {
@@ -20,8 +24,12 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const [likeCount, setLikeCount] = useState<number>(post.likesCount);
   const [loading, setLoading] = useState<boolean>(false);
-  const [createCommentLoading, setCreateCommentLoading] = useState<boolean>(false);
-  const [commentsCount, setCommentsCount] = useState<number>(post.commentsCount);
+  const [createCommentLoading, setCreateCommentLoading] =
+    useState<boolean>(false);
+  const [commentsCount, setCommentsCount] = useState<number>(
+    post.commentsCount,
+  );
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<CommentType[]>([]);
@@ -68,7 +76,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
     setLoadingComments(true);
     try {
       const response = await getCommentByPostId(post._id);
-      setComments(response.data)
+      setComments(response.data);
     } catch (err: any) {
       console.log(err?.message);
     } finally {
@@ -83,7 +91,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
     }
   };
 
-  const handleAddComment= async () => {
+  const handleAddComment = async () => {
     if (!user) {
       toast.error("Login to comment");
       return;
@@ -93,17 +101,33 @@ const FeedPost = ({ post }: FeedPostProps) => {
       toast.error("Comment cannot be empty");
       return;
     }
-   setCreateCommentLoading(true);
+    setCreateCommentLoading(true);
     try {
       const newComment = await createComment(post._id, commentText);
       setComments((prev) => [newComment.data, ...prev]);
       setCommentsCount((prev) => prev + 1);
       setcommentText("");
-      toast.success("Comment added")
+      toast.success("Comment added");
     } catch (err: any) {
       toast.error(err.message || "Failed to add comment");
-    }finally{
+    } finally {
       setCreateCommentLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    setDeleteLoading(true);
+    try {
+      await deleteComment(post._id, commentId);
+      setComments((prev) =>
+        prev.filter((comment) => comment._id !== commentId),
+      );
+      setCommentsCount((prev) => prev - 1);
+      toast.success("Comment Deleted Successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete the comment");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -190,32 +214,57 @@ const FeedPost = ({ post }: FeedPostProps) => {
             ) : comments.length === 0 ? (
               <p className="text-white/60 text-sm">No Comments Yet</p>
             ) : (
-              comments?.map((comment) => (
-                <div className="flex items-center gap-2" key={comment._id}>
-                  <img
-                    className="w-8 h-8 rounded-full object-cover"
-                    src={comment.commentedBy?.profileImage}
-                  />
-                  <div className="bg-white/5 px-3 py-2 rounded-lg">
-                  <p className="text-sm text-white font-bold">{comment?.commentedBy?.username}</p>
-                  <p className="text-sm text-white/80 ">{comment.comment}</p>
-
-                  
-
+              comments?.map((comment) => {
+                const isPostOwner = user?._id === post?.owner?._id;
+                const isCommentOwner = user?._id === comment.commentedBy._id;
+                const canDelete = isPostOwner || isCommentOwner;
+                return (
+                  <div
+                    key={comment._id}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <div className="flex  gap-2">
+                      <img
+                        className="w-8 h-8 rounded-full object-cover"
+                        src={comment.commentedBy?.profileImage}
+                      />
+                      <div className="bg-white/5 px-3 py-2 rounded-lg">
+                        <p className="text-sm text-white font-bold">
+                          {comment?.commentedBy?.username}
+                        </p>
+                        <p className="text-sm text-white/80 ">
+                          {comment.comment}
+                        </p>
+                      </div>
+                    </div>
+                    {canDelete && (
+                      <button disabled={deleteLoading}
+                        onClick={() => handleDeleteComment(comment._id)}
+                        className="text-red-400 hover:text-red-500 transition"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
 
             {/* Add Comment  */}
             <div className="flex gap-2 pt-2">
-              <input value={commentText} 
-              onChange={(e) => setcommentText(e.target.value)}
-              className="flex-1 bg-white/5 text-white px-3 py-2 rounded-md"
-              placeholder="Write a comment"
-               />
-               <button disabled={createCommentLoading}  onClick={handleAddComment} className="bg-blue-600 cursor-pointer px-4 rounded-md text-white">{createCommentLoading ? "Posting" : "Post"}</button>
-
+              <input
+                value={commentText}
+                onChange={(e) => setcommentText(e.target.value)}
+                className="flex-1 bg-white/5 text-white px-3 py-2 rounded-md"
+                placeholder="Write a comment"
+              />
+              <button
+                disabled={createCommentLoading}
+                onClick={handleAddComment} 
+                className="bg-blue-600 cursor-pointer px-4 rounded-md text-white"
+              >
+                {createCommentLoading ? "Posting" : "Post"}
+              </button>
             </div>
           </div>
         )}

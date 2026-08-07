@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { IUserProfileInfo } from "../../types/userProfile";
 import { toast } from "sonner";
 import {
+  addBio,
   followUser,
   unfollowUser,
+  updateBio,
   updateProfileImage,
 } from "../../api/userProfile.api";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,7 +31,8 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const isOwnProfile = loggedInUser?.username === user.username;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [bio, setBioInput] = useState(user.bio || "");
+  const [bioInput, setBioInput] = useState(user.bio || "");
+  const [bioLoading, setBioLoading] = useState(false);
 
   const dispatch = useDispatch();
   const handlePickImage = () => {
@@ -40,6 +43,45 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
     setBioInput(user.bio || "");
   }, [user]);
 
+  const handleSaveBio = async () => {
+    const bio = bioInput.trim();
+
+    if (!bio) {
+      toast.error("Bio cannot be empty");
+      return;
+    }
+
+    setBioLoading(true);
+
+    try {
+      let response;
+
+      if (!user.bio) {
+        response = await addBio(bio);
+        toast.success("Bio added successfully");
+      } else {
+        response = await updateBio(bio);
+        toast.success("Bio updated successfully");
+      }
+
+      dispatch(setUser(response.data));
+
+      setUserProfileInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              bio: response.data.bio,
+            }
+          : prev,
+      );
+
+      setIsEditing(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
+    } finally {
+      setBioLoading(false);
+    }
+  };
   const handleProfileImageChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -177,18 +219,59 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
           </div>
         )}
       </div>
-
       {/* Bio */}
-      {user?.bio ? (
+      {(user.bio || isOwnProfile) && (
         <div className="mt-6 rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
-          <p className="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">
-            Bio
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] uppercase tracking-widest text-zinc-500">
+              Bio
+            </p>
 
-          <p className="text-sm text-zinc-200">{user.bio}</p>
+            {isOwnProfile && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-violet-400 hover:text-violet-300"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+          </div>
+
+          {isEditing ? (
+            <>
+              <textarea
+                value={bioInput}
+                onChange={(e) => setBioInput(e.target.value)}
+                rows={2}
+                maxLength={200}
+                placeholder="Write something about yourself..."
+                className="w-full rounded-lg bg-zinc-800 border border-zinc-700 p-3 text-white resize-none outline-none focus:border-violet-500"
+              />
+
+              <div className="flex justify-end gap-2 mt-3">
+                <button
+                  onClick={() => {
+                    setBioInput(user.bio || "");
+                    setIsEditing(false);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSaveBio}
+                  disabled={bioLoading}
+                  className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60"
+                >
+                  {bioLoading ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-zinc-200">{user.bio}</p>
+          )}
         </div>
-      ) : (
-        ""
       )}
 
       {/* Stats */}

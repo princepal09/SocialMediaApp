@@ -424,7 +424,7 @@ export const addBio = async (req: Request, res: Response) => {
 
 export const updateBio = async (req: Request, res: Response) => {
   try {
-    const updateBio = req.body;
+    const {updateBio} = req.body;
     if (!updateBio || updateBio === "") {
       throw new ApiError(400, "Bio is required");
     }

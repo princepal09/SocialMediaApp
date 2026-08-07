@@ -20,6 +20,8 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const [likeCount, setLikeCount] = useState<number>(post.likesCount);
   const [loading, setLoading] = useState<boolean>(false);
+  const [createCommentLoading, setCreateCommentLoading] = useState<boolean>(false);
+  const [commentsCount, setCommentsCount] = useState<number>(post.commentsCount);
 
   const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<CommentType[]>([]);
@@ -81,7 +83,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
     }
   };
 
-  const handleAddComments = async () => {
+  const handleAddComment= async () => {
     if (!user) {
       toast.error("Login to comment");
       return;
@@ -91,13 +93,17 @@ const FeedPost = ({ post }: FeedPostProps) => {
       toast.error("Comment cannot be empty");
       return;
     }
-
+   setCreateCommentLoading(true);
     try {
       const newComment = await createComment(post._id, commentText);
-      setComments((prev) => [newComment, ...prev]);
+      setComments((prev) => [newComment.data, ...prev]);
+      setCommentsCount((prev) => prev + 1);
       setcommentText("");
+      toast.success("Comment added")
     } catch (err: any) {
       toast.error(err.message || "Failed to add comment");
+    }finally{
+      setCreateCommentLoading(false);
     }
   };
 
@@ -171,7 +177,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
             className="flex items-center gap-1 cursor-pointer text-white/50 hover:text-white transition-all"
           >
             <MessageCircle size={20} />
-            <span className="text-sm">{post?.commentsCount}</span>
+            <span className="text-sm">{commentsCount}</span>
           </button>
         </div>
 
@@ -200,6 +206,17 @@ const FeedPost = ({ post }: FeedPostProps) => {
                 </div>
               ))
             )}
+
+            {/* Add Comment  */}
+            <div className="flex gap-2 pt-2">
+              <input value={commentText} 
+              onChange={(e) => setcommentText(e.target.value)}
+              className="flex-1 bg-white/5 text-white px-3 py-2 rounded-md"
+              placeholder="Write a comment"
+               />
+               <button disabled={createCommentLoading}  onClick={handleAddComment} className="bg-blue-600 cursor-pointer px-4 rounded-md text-white">{createCommentLoading ? "Posting" : "Post"}</button>
+
+            </div>
           </div>
         )}
       </div>

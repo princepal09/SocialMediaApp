@@ -8,8 +8,7 @@ export const getCommentByPostId = async(postId : string) =>{
     return response?.data 
 }
 export const createComment  = async(postId : string, comment:string) =>{
-
-    const response = await api.post(`/comments/create-comment/${postId}`, comment);
+    const response = await api.post(`/comments/create-comment/${postId}`, {comment});
     return response?.data 
 }
 export const deleteComment  = async(postId : string, commentId:string) =>{

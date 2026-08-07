@@ -51,6 +51,11 @@ export const createComment = async (req: Request, res: Response) => {
       },
       { session }
     );
+    // Populate the user
+    await newComment.populate({
+      path: "commentedBy",
+      select: "username profileImage ", 
+    });
 
     await session.commitTransaction();
 
@@ -86,7 +91,10 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
     }
     const comments = await Comment.find({
       post: postId,
-    });
+    }).populate({
+      path : "commentedBy",
+      select : "username profileImage"
+    }).exec()
 
     return res
       .status(200)
@@ -145,9 +153,9 @@ export const deleteComment = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).json(
-      new ApiResponse(200, null, "Comment deleted successfully")
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Comment deleted successfully"));
   } catch (err: any) {
     console.error(err);
 

@@ -23,6 +23,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
 
   const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<CommentType[]>([]);
+  // console.log(comments)
   const [commentText, setcommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
 
@@ -65,7 +66,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
     setLoadingComments(true);
     try {
       const response = await getCommentByPostId(post._id);
-      return response?.data;
+      setComments(response.data)
     } catch (err: any) {
       console.log(err?.message);
     } finally {
@@ -187,8 +188,15 @@ const FeedPost = ({ post }: FeedPostProps) => {
                 <div className="flex items-center gap-2" key={comment._id}>
                   <img
                     className="w-8 h-8 rounded-full object-cover"
-                    src={comment?.commentedBy?.profileImage}
+                    src={comment.commentedBy?.profileImage}
                   />
+                  <div className="bg-white/5 px-3 py-2 rounded-lg">
+                  <p className="text-sm text-white font-bold">{comment?.commentedBy?.username}</p>
+                  <p className="text-sm text-white/80 ">{comment.comment}</p>
+
+                  
+
+                  </div>
                 </div>
               ))
             )}

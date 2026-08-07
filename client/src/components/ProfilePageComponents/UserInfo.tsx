@@ -6,16 +6,19 @@ import {
   unfollowUser,
   updateProfileImage,
 } from "../../api/userProfile.api";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Pencil } from "lucide-react";
+import { setUser } from "../../store/slices/authSlice";
 
 interface UserInfoProps {
   user: IUserProfileInfo;
-  refetchProfile?: () => void;
+  setUserProfileInfo: React.Dispatch<
+    React.SetStateAction<IUserProfileInfo | null>
+  >;
 }
 
-const UserInfo = ({ user, refetchProfile }: UserInfoProps) => {
+const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
   const [isFollowing, setIsFollowing] = useState<boolean>(user.isFollowing);
   // console.log(isFollowing);
@@ -25,52 +28,58 @@ const UserInfo = ({ user, refetchProfile }: UserInfoProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isOwnProfile = loggedInUser?.username === user.username;
 
+  const dispatch = useDispatch();
   const handlePickImage = () => {
     fileInputRef.current?.click();
   };
 
- const handleProfileImageChange = async (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = e.target.files?.[0];
+  const handleProfileImageChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  if (!file.type.startsWith("image/")) {
-    toast.error("Please select a valid image");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("profileImage", file);
-
-  setImageUploading(true);
-
-  const toastId = toast.loading("Updating profile image...");
-
-  try {
-    await updateProfileImage(formData);
-
-    if(refetchProfile){
-      await refetchProfile()
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image");
+      return;
     }
 
-    toast.success("Profile image updated successfully", {
-      id: toastId,
-    });
-  } catch (err: any) {
-    toast.error(err?.message || "Failed to update profile image", {
-      id: toastId,
-    });
-    
-  } finally {
-    setImageUploading(false);
-    toast.dismiss(toastId);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    const formData = new FormData();
+    formData.append("profileImage", file);
+
+    setImageUploading(true);
+
+    const toastId = toast.loading("Updating profile image...");
+
+    try {
+      const response = await updateProfileImage(formData);
+      dispatch(setUser(response.data));
+      setUserProfileInfo((prev) =>
+        prev
+          ? {
+              ...prev,
+              profileImage: response.data.profileImage,
+            }
+          : prev,
+      );
+
+      toast.success("Profile image updated successfully", {
+        id: toastId,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update profile image", {
+        id: toastId,
+      });
+    } finally {
+      setImageUploading(false);
+      toast.dismiss(toastId);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
-  }
-};
+  };
+
   const handleFollowToggle = async () => {
     setLoading(true);
     try {

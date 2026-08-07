@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -6,54 +6,39 @@ import UserInfo from "./UserInfo";
 import UserPosts from "./UserPosts";
 import Spinner from "../general/Spinner";
 
-import {
-  getUserProfileInfo,
-  geUserPosts,
-} from "../../api/userProfile.api";
-
-import {
-  IUserProfileInfo,
-  PostsResponse,
-} from "../../types/userProfile";
+import { getUserProfileInfo, geUserPosts } from "../../api/userProfile.api";
+import { IUserProfileInfo, PostsResponse } from "../../types/userProfile";
 
 const UserProfileContainer = () => {
   const { username } = useParams<{ username: string }>();
 
   const [userProfileInfo, setUserProfileInfo] =
     useState<IUserProfileInfo | null>(null);
-
-  const [userPosts, setUserPosts] =
-    useState<PostsResponse | null>(null);
-
   const [loading, setLoading] = useState(false);
+
+  const [userPosts, setUserPosts] = useState<PostsResponse | null>(null);
   const [userPostLoading, setUserPostLoading] = useState(false);
 
-  // Fetch Profile
-  const refetchProfile = useCallback(async () => {
-    if (!username) return;
-
-    try {
-      const response = await getUserProfileInfo(username);
-      setUserProfileInfo(response.data);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to fetch profile");
-    }
-  }, [username]);
-
-  // Initial Profile Fetch
   useEffect(() => {
     if (!username) return;
 
-    const init = async () => {
+    const fetchProfile = async () => {
       setLoading(true);
-      await refetchProfile();
-      setLoading(false);
+
+      try {
+        const response = await getUserProfileInfo(username);
+        // console.log("userProfileInfo", response.data)
+        setUserProfileInfo(response.data);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to fetch profile");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    init();
-  }, [username, refetchProfile]);
+    fetchProfile();
+  }, [username]);
 
-  // Fetch User Posts
   useEffect(() => {
     if (!username) return;
 
@@ -79,25 +64,21 @@ const UserProfileContainer = () => {
 
   if (!userProfileInfo) {
     return (
-      <div className="text-center text-white py-10">
+      <div className="h-full flex items-center justify-center text-white">
         User not found
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <UserInfo
-        user={userProfileInfo}
-        refetchProfile={refetchProfile}
-      />
+    <div className="h-full overflow-y-auto">
+      <div className="min-w-[64vw] pb-6">
+        <UserInfo
+          user={userProfileInfo}
+          setUserProfileInfo={setUserProfileInfo}
+        />
 
-      <div className="mt-8">
-        {userPostLoading ? (
-          <Spinner />
-        ) : (
-          <UserPosts userPosts={userPosts} />
-        )}
+        {userPostLoading ? <Spinner /> : <UserPosts userPosts={userPosts} />}
       </div>
     </div>
   );

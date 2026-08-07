@@ -503,7 +503,7 @@ export const updateProfileImage = async (req: Request, res: Response) => {
 
       return res
         .status(201)
-        .json(new ApiResponse(201, null, "Profile Image Updated Successfully"));
+        .json(new ApiResponse(201, user, "Profile Image Updated Successfully"));
     }
   } catch (err: any) {
     console.error(err);

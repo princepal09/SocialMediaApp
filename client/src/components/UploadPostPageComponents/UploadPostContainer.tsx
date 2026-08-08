@@ -3,13 +3,14 @@ import { toast } from "sonner";
 import { createPost } from "../../api/post.api";
 import PostEditor from "./PostEditor";
 import { Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const UploadPostContainer = () => {
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     if (!image) {
       setImagePreview("");
@@ -72,6 +73,7 @@ const UploadPostContainer = () => {
       await createPost(formData);
 
       toast.success("Post uploaded successfully");
+      navigate("/feed");
 
       setContent("");
       setImage(null);
@@ -164,7 +166,7 @@ const UploadPostContainer = () => {
             type="button"
             onClick={handleCreatePost}
             disabled={loading}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r bg-[#9929EA] px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] hover:bg-[#840fd7] hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r bg-[#9929EA] px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02] hover:bg-[#9929EA] hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
           >
             {loading ? (
               <>

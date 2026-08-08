@@ -10,6 +10,7 @@ import PublicRoute from "./routes/PublicRoute";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import ErrorPage from "./pages/ErrorPage";
+import UploadPostPage from "./pages/UploadPostPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -70,6 +71,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upload-post"
+            element={
+              <ProtectedRoute>
+                <UploadPostPage/>
               </ProtectedRoute>
             }
           />

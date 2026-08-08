@@ -1,4 +1,10 @@
-import { CalendarDays, Heart, MessageCircle, Trash2, User2 } from "lucide-react";
+import {
+  CalendarDays,
+  Heart,
+  MessageCircle,
+  Trash2,
+  User2,
+} from "lucide-react";
 import { Post } from "../../types/userProfile";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -149,7 +155,10 @@ const UserPost = ({ post }: UserPostProps) => {
 
       {/* Caption */}
       <div className="px-4 pb-3">
-        <p className="text-sm text-zinc-200">{post.content}</p>
+        <div
+          className="prose prose-invert max-w-none text-white"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
       </div>
 
       {/* Image */}
@@ -188,78 +197,76 @@ const UserPost = ({ post }: UserPostProps) => {
         </button>
       </div>
       {/* Comments Section */}
-{showComments && (
-  <div className="mt-4 border-t border-zinc-800 px-4 pt-4 space-y-3">
-    {loadingComments ? (
-      <Spinner fullScreen={false} />
-    ) : comments.length === 0 ? (
-      <p className="text-sm text-zinc-400">No comments yet.</p>
-    ) : (
-      comments.map((comment) => {
-        const isPostOwner = user?._id === post.owner._id;
-        const isCommentOwner = user?._id === comment.commentedBy._id;
-        const canDelete = isPostOwner || isCommentOwner;
+      {showComments && (
+        <div className="mt-4 border-t border-zinc-800 px-4 pt-4 space-y-3">
+          {loadingComments ? (
+            <Spinner fullScreen={false} />
+          ) : comments.length === 0 ? (
+            <p className="text-sm text-zinc-400">No comments yet.</p>
+          ) : (
+            comments.map((comment) => {
+              const isPostOwner = user?._id === post.owner._id;
+              const isCommentOwner = user?._id === comment.commentedBy._id;
+              const canDelete = isPostOwner || isCommentOwner;
 
-        return (
-          <div
-            key={comment._id}
-            className="flex items-center justify-between gap-2"
-          >
-            <div className="flex gap-2">
-              {comment.commentedBy.profileImage ? (
-                <img
-                  src={comment.commentedBy.profileImage}
-                  alt={comment.commentedBy.username}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              ) : (
-                <User2 className="w-8 h-8 text-white" />
-              )}
+              return (
+                <div
+                  key={comment._id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <div className="flex gap-2">
+                    {comment.commentedBy.profileImage ? (
+                      <img
+                        src={comment.commentedBy.profileImage}
+                        alt={comment.commentedBy.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User2 className="w-8 h-8 text-white" />
+                    )}
 
-              <div className="bg-zinc-800 rounded-lg px-3 py-2">
-                <p className="font-semibold text-white text-sm">
-                  {comment.commentedBy.username}
-                </p>
+                    <div className="bg-zinc-800 rounded-lg px-3 py-2">
+                      <p className="font-semibold text-white text-sm">
+                        {comment.commentedBy.username}
+                      </p>
 
-                <p className="text-sm text-zinc-300">
-                  {comment.comment}
-                </p>
-              </div>
-            </div>
+                      <p className="text-sm text-zinc-300">{comment.comment}</p>
+                    </div>
+                  </div>
 
-            {canDelete && (
-              <button
-                disabled={deleteLoading}
-                onClick={() => handleDeleteComment(comment._id)}
-                className="text-red-400 hover:text-red-500 transition"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
+                  {canDelete && (
+                    <button
+                      disabled={deleteLoading}
+                      onClick={() => handleDeleteComment(comment._id)}
+                      className="text-red-400 hover:text-red-500 transition"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+
+          {/* Add Comment */}
+          <div className="flex gap-2 pt-2">
+            <input
+              value={commentText}
+              onChange={(e) => setcommentText(e.target.value)}
+              placeholder="Write a comment..."
+              className="flex-1 rounded-md bg-zinc-800 px-3 py-2 text-white outline-none"
+            />
+
+            <button
+              disabled={createCommentLoading}
+              onClick={handleAddComment}
+              className="rounded-md bg-blue-600 px-4 text-white hover:bg-blue-700"
+            >
+              {createCommentLoading ? "Posting..." : "Post"}
+            </button>
           </div>
-        );
-      })
-    )}
-
-    {/* Add Comment */}
-    <div className="flex gap-2 pt-2">
-      <input
-        value={commentText}
-        onChange={(e) => setcommentText(e.target.value)}
-        placeholder="Write a comment..."
-        className="flex-1 rounded-md bg-zinc-800 px-3 py-2 text-white outline-none"
-      />
-
-      <button
-        disabled={createCommentLoading}
-        onClick={handleAddComment}
-        className="rounded-md bg-blue-600 px-4 text-white hover:bg-blue-700"
-      >
-        {createCommentLoading ? "Posting..." : "Post"}
-      </button>
-    </div>
-  </div>
-)}
+        </div>
+      )}
     </section>
   );
 };

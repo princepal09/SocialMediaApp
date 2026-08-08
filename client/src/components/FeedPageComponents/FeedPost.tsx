@@ -18,6 +18,7 @@ interface FeedPostProps {
   post: Post;
 }
 
+
 const FeedPost = ({ post }: FeedPostProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -164,13 +165,21 @@ const FeedPost = ({ post }: FeedPostProps) => {
         </div>
 
         {post.image && (
-          <div className="md:my-2">
-            <img src={post?.image} className="rounded-xl max-h-105" />
-          </div>
+          <img
+            src={post.image}
+            alt="Post"
+            className="mt-3 w-full rounded-xl object-cover"
+          />
         )}
 
-        <p className="text-white">{post?.content}</p>
+        <div className="prose prose-invert max-w-none text-white"
+        dangerouslySetInnerHTML={{__html:post.content}}
+        >
+          
 
+        </div>
+
+       
         <div className="flex items-center gap-5">
           {/* Likes */}
           <div className="flex items-center gap-2">

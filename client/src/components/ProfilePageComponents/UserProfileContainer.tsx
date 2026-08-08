@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import UserInfo from "./UserInfo";
@@ -8,9 +8,14 @@ import Spinner from "../general/Spinner";
 
 import { getUserProfileInfo, geUserPosts } from "../../api/userProfile.api";
 import { IUserProfileInfo, PostsResponse } from "../../types/userProfile";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { Plus } from "lucide-react";
 
 const UserProfileContainer = () => {
   const { username } = useParams<{ username: string }>();
+
+  const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
   const [userProfileInfo, setUserProfileInfo] =
     useState<IUserProfileInfo | null>(null);
@@ -78,6 +83,20 @@ const UserProfileContainer = () => {
           setUserProfileInfo={setUserProfileInfo}
         />
 
+        <div className="flex justify-end">
+          {loggedInUser?.username === username && (
+            <Link
+              to="/upload-post"
+              className="group inline-flex mr-8 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
+            >
+              <Plus
+                size={20}
+                className="transition-transform duration-200 group-hover:rotate-90"
+              />
+              <span>Create Post</span>
+            </Link>
+          )}
+        </div>
         {userPostLoading ? <Spinner /> : <UserPosts userPosts={userPosts} />}
       </div>
     </div>

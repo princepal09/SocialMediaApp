@@ -6,27 +6,58 @@ import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import sanitizeHtml from "sanitize-html";
+
 
 export const createPost = async (req: Request, res: Response) => {
   try {
-    const postImagePath  = req.file?.path;
+    const postImagePath = req.file?.path;
+
     console.log("Body:", req.body);
     console.log("File:", req.file);
+
     const { content } = req.body;
     const userId = req.user?.id;
+
+    if (!content || typeof content !== "string") {
+      throw new ApiError(400, "Post content is required");
+    }
+
+    const sanitizedContent = sanitizeHtml(content, {
+      allowedTags: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "s",
+        "u",
+        "h1",
+        "h2",
+        "h3",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "code",
+        "pre",
+      ],
+      allowedAttributes: {},
+    });
+
     let imageUrl;
 
-    if (postImagePath ) {
+    if (postImagePath) {
       imageUrl = await uploadToCloudinary(postImagePath);
     }
 
     const user = await User.findById(userId);
+
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
     const post = await Post.create({
-      content,
+      content: sanitizedContent,
       image: imageUrl?.secure_url,
       owner: userId,
     });
@@ -39,7 +70,13 @@ export const createPost = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .json(new ApiResponse(201, post, "Post Created Successfully"));
+      .json(
+        new ApiResponse(
+          201,
+          post,
+          "Post Uploaded Successfully"
+        )
+      );
   } catch (err: any) {
     console.error(err);
 

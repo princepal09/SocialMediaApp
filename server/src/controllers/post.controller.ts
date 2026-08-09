@@ -444,6 +444,7 @@ export const deletePost = async (req: Request, res: Response) => {
     const { postId } = req.params;
     const userId = req.user?._id;
 
+
     if (!postId) {
       throw new ApiError(401, "Post Id not found");
     }

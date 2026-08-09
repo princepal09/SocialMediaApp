@@ -63,6 +63,12 @@ const UserProfileContainer = () => {
     fetchPosts();
   }, [username]);
 
+  const handleDeletePostFromUi = (postId: string) => {
+    setUserPosts((prev) =>
+      prev ? prev.filter((post) => post._id !== postId) : null,
+    );
+  };
+
   if (loading) {
     return <Spinner />;
   }
@@ -97,7 +103,7 @@ const UserProfileContainer = () => {
             </Link>
           )}
         </div>
-        {userPostLoading ? <Spinner /> : <UserPosts userPosts={userPosts} />}
+        {userPostLoading ? <Spinner /> : <UserPosts onDeletePost = {handleDeletePostFromUi} userPosts={userPosts} />}
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import {
   CalendarDays,
   Heart,
   MessageCircle,
+  Pencil,
+  Trash,
   Trash2,
   User2,
 } from "lucide-react";
@@ -18,17 +20,22 @@ import {
   getCommentByPostId,
 } from "../../api/comment.api";
 import Spinner from "../general/Spinner";
+import { Link } from "react-router-dom";
+import { deletePost } from "../../api/post.api";
 
 interface UserPostProps {
   post: Post;
+  onDeletePost : (postId : string) => void;
 }
 
-const UserPost = ({ post }: UserPostProps) => {
+const UserPost = ({ post , onDeletePost}: UserPostProps) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const { user } = useSelector((state: RootState) => state.auth);
   const [loading, setLoading] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(post.likesCount);
   const isLikedByMe = user ? likes.includes(user._id) : false;
+
+  const [deletePostLoading, setDeletePostLoading] = useState<boolean>(false);
 
   const [createCommentLoading, setCreateCommentLoading] =
     useState<boolean>(false);
@@ -144,15 +151,46 @@ const UserPost = ({ post }: UserPostProps) => {
     }
   }, [post.content]);
 
+  const handleDeletePost = async () => {
+    const toastId = toast.loading("Deleting ...");
+    try {
+      const response = await deletePost(post._id);
+      onDeletePost(post._id);
+      toast.success(response.message || "Post deleted");
+    } catch (err: any) {
+      toast.error(err?.message);
+    } finally {
+      toast.dismiss(toastId);
+    }
+  };
+
   return (
     <section>
       {/* Header */}
       <div className="px-4">
-        <p className="font-semibold text-white">@{post.owner.username}</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="font-semibold text-white">@{post.owner.username}</p>
 
-        <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
-          <CalendarDays size={13} />
-          {new Date(post.createdAt).toLocaleDateString()}
+            <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+              <CalendarDays size={13} />
+              {new Date(post.createdAt).toLocaleDateString()}
+            </div>
+          </div>
+          {user?.username === post.owner.username && (
+            <div className="flex item-center justify-center gap-5">
+              <Link
+                className="text-[#9929EA] hover:text-[#5f1792]"
+                to={`post/edit/${post._id}`}
+              >
+                <Pencil size={18} />
+              </Link>
+
+              <button onClick={handleDeletePost} className="text-red-500 cursor-pointer hover:text-red-800 transition-all">
+                <Trash size={18} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

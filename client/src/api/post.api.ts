@@ -8,7 +8,7 @@ export const createPost = async(formData:FormData) =>{
 }
 
 export const deletePost = async(postId:string) =>{
-    const response = await api.post(`/post/delete-post/${postId}`);
+    const response = await api.delete(`/post/delete-post/${postId}`);
     return response.data;
 }
 export const updatePost = async(postId:string ,content:string) =>{

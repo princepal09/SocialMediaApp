@@ -11,6 +11,7 @@ import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import ErrorPage from "./pages/ErrorPage";
 import UploadPostPage from "./pages/UploadPostPage";
+import EditPostImage from "./pages/EditPostImage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -79,6 +80,15 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <UploadPostPage/>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile/:username/post/edit/:postId"
+            element={
+              <ProtectedRoute>
+                <EditPostImage/>
               </ProtectedRoute>
             }
           />

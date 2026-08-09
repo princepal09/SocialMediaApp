@@ -220,7 +220,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
               <div className="flex items-center justify-center gap-5">
                 <Link
                   className="text-[#9929EA] transition hover:text-[#5f1792]"
-                  to={`post/edit/${post._id}`}
+                  to={`/profile/${user.username}/post/edit/${post._id}`}
                 >
                   <Pencil size={18} />
                 </Link>

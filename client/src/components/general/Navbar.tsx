@@ -25,25 +25,31 @@ const Navbar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
     <nav className="text-white flex justify-between items-center md:px-20 px-4 py-4 border-[#230737]">
-      <Link to={"/"} className="text-2xl md:text-3xl font-bold text-[#9929EA]">Pixora</Link>
+      <Link to={"/"} className="text-2xl md:text-3xl font-bold text-[#9929EA]">
+        Pixora
+      </Link>
 
       {user ? (
         <div className="flex items-center gap-3 md:gap-5">
           {user.profileImage ? (
-            <img
-              src={user.profileImage}
-              alt={user.username}
-              className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border border-[#9929EA]"
-            />
+            <Link to={`/profile/${user.username}`}>
+              <img
+                src={user.profileImage}
+                alt={user.username}
+                className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border border-[#9929EA]"
+              />
+            </Link>
           ) : (
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-700 flex items-center justify-center">
               <User2 size={18} />
             </div>
           )}
 
-          <span className="hidden sm:block text-sm md:text-base font-medium">
-            {user.username}
-          </span>
+          <Link to={`/profile/${user.username}`}>
+            <span className="hidden sm:block text-sm md:text-base font-medium">
+              {user.username}
+            </span>
+          </Link>
 
           <button
             onClick={handleLogout}

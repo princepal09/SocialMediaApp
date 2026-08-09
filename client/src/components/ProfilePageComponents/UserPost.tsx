@@ -25,10 +25,10 @@ import { deletePost } from "../../api/post.api";
 
 interface UserPostProps {
   post: Post;
-  onDeletePost : (postId : string) => void;
+  onDeletePost: (postId: string) => void;
 }
 
-const UserPost = ({ post , onDeletePost}: UserPostProps) => {
+const UserPost = ({ post, onDeletePost }: UserPostProps) => {
   const [likes, setLikes] = useState<string[]>(post.likes);
   const { user } = useSelector((state: RootState) => state.auth);
   const [loading, setLoading] = useState(false);
@@ -186,7 +186,10 @@ const UserPost = ({ post , onDeletePost}: UserPostProps) => {
                 <Pencil size={18} />
               </Link>
 
-              <button onClick={handleDeletePost} className="text-red-500 cursor-pointer hover:text-red-800 transition-all">
+              <button
+                onClick={handleDeletePost}
+                className="text-red-500 cursor-pointer hover:text-red-800 transition-all"
+              >
                 <Trash size={18} />
               </button>
             </div>

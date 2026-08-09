@@ -67,6 +67,15 @@ const UserProfileContainer = () => {
     setUserPosts((prev) =>
       prev ? prev.filter((post) => post._id !== postId) : null,
     );
+
+    setUserProfileInfo((prev) => {
+      if (!prev) return null;
+
+      return {
+        ...prev,
+        postCount: Math.max(0, prev.postCount - 1),
+      };
+    });
   };
 
   if (loading) {
@@ -103,7 +112,14 @@ const UserProfileContainer = () => {
             </Link>
           )}
         </div>
-        {userPostLoading ? <Spinner /> : <UserPosts onDeletePost = {handleDeletePostFromUi} userPosts={userPosts} />}
+        {userPostLoading ? (
+          <Spinner />
+        ) : (
+          <UserPosts
+            onDeletePost={handleDeletePostFromUi}
+            userPosts={userPosts}
+          />
+        )}
       </div>
     </div>
   );

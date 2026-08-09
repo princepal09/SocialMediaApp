@@ -25,9 +25,7 @@ const UploadPostContainer = () => {
     };
   }, [image]);
 
-  const handleImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -50,9 +48,7 @@ const UploadPostContainer = () => {
   };
 
   const handleCreatePost = async () => {
-    const plainText = content
-      .replace(/<[^>]*>/g, "")
-      .trim();
+    const plainText = content.replace(/<[^>]*>/g, "").trim();
 
     if (!plainText) {
       toast.error("Post cannot be empty");
@@ -78,9 +74,7 @@ const UploadPostContainer = () => {
       setContent("");
       setImage(null);
     } catch (err: any) {
-      toast.error(
-        err?.message || "Failed to create post"
-      );
+      toast.error(err?.message || "Failed to create post");
     } finally {
       setLoading(false);
     }
@@ -112,10 +106,7 @@ const UploadPostContainer = () => {
         </div>
 
         <div className="p-4">
-          <PostEditor
-            value={content}
-            onChange={setContent}
-          />
+          <PostEditor value={content} onChange={setContent} />
         </div>
 
         {imagePreview && (
@@ -157,9 +148,8 @@ const UploadPostContainer = () => {
               className="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm font-medium text-neutral-300 transition hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
             >
               <span>Upload Image</span>
-              <Upload size={12}/>
+              <Upload size={12} />
             </label>
-            
           </div>
 
           <button
@@ -174,10 +164,7 @@ const UploadPostContainer = () => {
                 Posting...
               </>
             ) : (
-              <>
-                
-                Post
-              </>
+              <>Post</>
             )}
           </button>
         </div>
@@ -185,13 +172,10 @@ const UploadPostContainer = () => {
 
       <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-600">
         <span>💡</span>
-        <span>
-          Share your thoughts, images and ideas
-        </span>
+        <span>Share your thoughts, images and ideas</span>
       </div>
     </div>
   );
 };
 
 export default UploadPostContainer;
-

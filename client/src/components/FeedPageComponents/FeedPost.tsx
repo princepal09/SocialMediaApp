@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { Post } from "../../types/post";
 import { RootState } from "../../store/store";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { toggleLikePost } from "../../api/like.api";
 import { Heart, MessageCircle, Trash2, User2 } from "lucide-react";
@@ -17,7 +17,6 @@ import Spinner from "../general/Spinner";
 interface FeedPostProps {
   post: Post;
 }
-
 
 const FeedPost = ({ post }: FeedPostProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -39,6 +38,10 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const [loadingComments, setLoadingComments] = useState(false);
 
   const isLikedByMe = user ? likes.includes(user._id) : false;
+
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState<boolean>(false);
 
   const handleToggleLike = async () => {
     if (!user) {
@@ -132,6 +135,13 @@ const FeedPost = ({ post }: FeedPostProps) => {
     }
   };
 
+  useEffect(() => {
+    if (contentRef.current) {
+      const element = contentRef.current;
+      setIsOverflowing(element.scrollHeight > element.clientHeight);
+    }
+  }, [post.content]);
+
   return (
     <section className="md:px-32 md:py-8 ">
       <div className="post-container flex flex-col gap-2">
@@ -171,15 +181,30 @@ const FeedPost = ({ post }: FeedPostProps) => {
             className="mt-3 w-full rounded-xl object-cover"
           />
         )}
+        {/* Post content with read more */}
+        <div className="relative">
+          <div
+            ref={contentRef}
+            className={`prose prose-invert max-w-none text-white transition-all duration-300 ${
+              expanded ? "" : "line-clamp-3 overflow-hidden"
+            }`}
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
 
-        <div className="prose prose-invert max-w-none text-white"
-        dangerouslySetInnerHTML={{__html:post.content}}
-        >
-          
-
+          {isOverflowing && (
+            <button
+              onClick={() => setExpanded((prev) => !prev)}
+              className="mt-1 text-sm text-blue-400 hover:underline"
+            >
+              {expanded ? "Read less" : "Read more"}
+            </button>
+          )}
         </div>
+        {/* <div
+          className="prose prose-invert max-w-none text-white"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        ></div> */}
 
-       
         <div className="flex items-center gap-5">
           {/* Likes */}
           <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@ import {
   User2,
 } from "lucide-react";
 import { Post } from "../../types/userProfile";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { toggleLikePost } from "../../api/like.api";
@@ -40,6 +40,10 @@ const UserPost = ({ post }: UserPostProps) => {
   // console.log(comments)
   const [commentText, setcommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
+
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState<boolean>(false);
 
   const handleToggleLike = async () => {
     if (!user) {
@@ -133,6 +137,13 @@ const UserPost = ({ post }: UserPostProps) => {
     }
   };
 
+  useEffect(() => {
+    if (contentRef.current) {
+      const element = contentRef.current;
+      setIsOverflowing(element.scrollHeight > element.clientHeight);
+    }
+  }, [post.content]);
+
   return (
     <section className="mx-auto my-6 w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden shadow-lg">
       {/* Header */}
@@ -153,12 +164,24 @@ const UserPost = ({ post }: UserPostProps) => {
         </div>
       </div>
 
-      {/* Caption */}
-      <div className="px-4 pb-3">
+      {/* Post content with read more */}
+      <div className="relative">
         <div
-          className="prose prose-invert max-w-none text-white"
+          ref={contentRef}
+          className={`prose prose-invert max-w-none text-white transition-all duration-300 ${
+            expanded ? "" : "line-clamp-3 overflow-hidden"
+          }`}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+
+        {isOverflowing && (
+          <button
+            onClick={() => setExpanded((prev) => !prev)}
+            className="mt-1 text-sm text-blue-400 hover:underline"
+          >
+            {expanded ? "Read less" : "Read more"}
+          </button>
+        )}
       </div>
 
       {/* Image */}

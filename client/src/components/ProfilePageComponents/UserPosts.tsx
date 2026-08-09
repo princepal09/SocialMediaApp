@@ -15,11 +15,13 @@ const UserPosts = ({ userPosts }: UserPostsProps) => {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {userPosts.map((post) => (
-        <UserPost key={post._id} post={post} />
-      ))}
+   <div className="flex w-full flex-col items-center gap-6">
+  {userPosts.map((post) => (
+    <div key={post._id} className="w-full max-w-2xl">
+      <UserPost post={post} />
     </div>
+  ))}
+</div>
   );
 };
 

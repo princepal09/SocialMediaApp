@@ -145,27 +145,19 @@ const UserPost = ({ post }: UserPostProps) => {
   }, [post.content]);
 
   return (
-    <section className="mx-auto my-6 w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden shadow-lg">
+    <section>
       {/* Header */}
-      <div className="flex items-center gap-3 p-4">
-        <img
-          src={post.owner.profileImage}
-          alt={post.owner.username}
-          className="h-10 w-10 rounded-full object-cover"
-        />
+      <div className="px-4">
+        <p className="font-semibold text-white">@{post.owner.username}</p>
 
-        <div>
-          <p className="font-semibold text-white">@{post.owner.username}</p>
-
-          <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
-            <CalendarDays size={13} />
-            {new Date(post.createdAt).toLocaleDateString()}
-          </div>
+        <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+          <CalendarDays size={13} />
+          {new Date(post.createdAt).toLocaleDateString()}
         </div>
       </div>
 
-      {/* Post content with read more */}
-      <div className="relative">
+      {/* Post content */}
+      <div className="relative mt-3 px-4">
         <div
           ref={contentRef}
           className={`prose prose-invert max-w-none text-white transition-all duration-300 ${
@@ -186,42 +178,44 @@ const UserPost = ({ post }: UserPostProps) => {
 
       {/* Image */}
       {post.image && (
-        <div className="px-4">
+        <div className="mt-3 px-4">
           <img
             src={post.image}
             alt="Post"
-            className="w-full h-72 rounded-xl object-cover"
+            className="h-72 w-full rounded-xl object-cover"
           />
         </div>
       )}
 
       {/* Footer */}
-      <div className="mt-4 flex items-center gap-8 border-t border-zinc-800 px-4 py-3 text-zinc-400">
+      <div className="mt-4 flex items-center gap-8 px-4 py-3 text-zinc-400">
         <div className="flex items-center gap-2">
           <button
             onClick={handleToggleLike}
             disabled={loading}
-            className="text-white hover:text-pink-500 transition"
+            className="text-white transition hover:text-pink-500"
           >
             <Heart
               size={20}
               className={isLikedByMe ? "fill-pink-500 text-pink-500" : ""}
             />
           </button>
+
           <span>{likeCount}</span>
         </div>
 
         <button
           onClick={handleToggleComments}
-          className="flex items-center gap-2 cursor-pointer hover:text-white transition"
+          className="flex items-center gap-2 transition hover:text-white"
         >
           <MessageCircle size={20} />
           <span>{commentsCount}</span>
         </button>
       </div>
-      {/* Comments Section */}
+
+      {/* Comments */}
       {showComments && (
-        <div className="mt-4 border-t border-zinc-800 px-4 pt-4 space-y-3">
+        <div className="mt-4 space-y-3 px-4 pt-4">
           {loadingComments ? (
             <Spinner fullScreen={false} />
           ) : comments.length === 0 ? (
@@ -230,6 +224,7 @@ const UserPost = ({ post }: UserPostProps) => {
             comments.map((comment) => {
               const isPostOwner = user?._id === post.owner._id;
               const isCommentOwner = user?._id === comment.commentedBy._id;
+
               const canDelete = isPostOwner || isCommentOwner;
 
               return (
@@ -242,14 +237,14 @@ const UserPost = ({ post }: UserPostProps) => {
                       <img
                         src={comment.commentedBy.profileImage}
                         alt={comment.commentedBy.username}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
-                      <User2 className="w-8 h-8 text-white" />
+                      <User2 className="h-8 w-8 text-white" />
                     )}
 
-                    <div className="bg-zinc-800 rounded-lg px-3 py-2">
-                      <p className="font-semibold text-white text-sm">
+                    <div className="rounded-lg bg-zinc-800 px-3 py-2">
+                      <p className="text-sm font-semibold text-white">
                         {comment.commentedBy.username}
                       </p>
 
@@ -261,7 +256,7 @@ const UserPost = ({ post }: UserPostProps) => {
                     <button
                       disabled={deleteLoading}
                       onClick={() => handleDeleteComment(comment._id)}
-                      className="text-red-400 hover:text-red-500 transition"
+                      className="text-red-400 transition hover:text-red-500"
                     >
                       <Trash2 size={16} />
                     </button>

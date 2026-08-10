@@ -4,8 +4,8 @@ export interface IUser extends Document {
   username: string;
   email: string;
   posts: Types.ObjectId[];
-  followers : Types.ObjectId[],
-  following: Types.ObjectId[],
+  followers: Types.ObjectId[];
+  following: Types.ObjectId[];
   bio: string;
   profileImage: string | undefined;
   refreshToken?: string | undefined;
@@ -19,13 +19,12 @@ export interface IUser extends Document {
   generateRefreshToken(): string;
 }
 
-
 export interface IPost extends Document {
   content: string;
   image?: string;
   owner: Types.ObjectId;
-  comments : Types.ObjectID[]
-  likes : Types.ObjectID[]
+  comments: Types.ObjectId[];
+  likes: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,3 +37,18 @@ export interface IComment extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IConversation {
+  participants: Types.ObjectId [];
+  lastMessage?: Types.ObjectId;
+}
+
+export interface IMessage extends Document {
+  conversation: Types.ObjectId;
+  sender: Types.ObjectId;
+  text?: string;
+  image?: string;
+  seenBy: Types.ObjectId[];
+  createdAt: Date;
+}
+

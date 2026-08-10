@@ -22,7 +22,6 @@ interface UserInfoProps {
 
 const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
-  
 
   const [isFollowing, setIsFollowing] = useState<boolean>(user.isFollowing);
   // console.log(isFollowing);
@@ -84,7 +83,6 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       setBioLoading(false);
     }
   };
-  
 
   const handleProfileImageChange = async (
     e: React.ChangeEvent<HTMLInputElement>,

@@ -59,7 +59,7 @@ const Sidebar = () => {
       <div>
         <button
           onClick={handleLogout}
-          className="px-3 md:px-4 cursor-pointer flex mb-5 items-center justify-center gap-2 py-1.5 md:py-2 rounded-md bg-red-500 hover:bg-[#8423c8] transition text-sm md:text-base"
+          className="px-3 md:px-4  cursor-pointer flex mb-5 items-center justify-center gap-2 py-1.5 md:py-2 rounded-xl bg-red-500 hover:bg-[#8423c8] transition text-sm md:text-base"
         >
           <LogOut size={18} />
           Logout

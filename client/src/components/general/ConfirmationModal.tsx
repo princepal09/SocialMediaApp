@@ -5,8 +5,8 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   loading?: boolean;
-  title : string;
-  message : string;
+  title: string;
+  message: string;
 }
 
 const ConfirmationModal = ({
@@ -24,9 +24,7 @@ const ConfirmationModal = ({
       <div className="w-[90%] max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-6 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">
-            {title}
-          </h2>
+          <h2 className="text-xl font-semibold text-white">{title}</h2>
 
           <button
             onClick={onClose}
@@ -38,9 +36,7 @@ const ConfirmationModal = ({
         </div>
 
         {/* Message */}
-        <p className="mt-4 text-sm text-zinc-400">
-         {message}
-        </p>
+        <p className="mt-4 text-sm text-zinc-400">{message}</p>
 
         {/* Buttons */}
         <div className="mt-6 flex justify-end gap-3">

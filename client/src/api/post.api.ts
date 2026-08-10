@@ -15,3 +15,15 @@ export const updatePost = async(postId:string ,content:string) =>{
     const response = await api.post(`/post/update-post-content/${postId}`, {content});
     return response.data;
 }
+
+
+export const getPostById = async(postId : string) =>{
+    const response = await api.get(`/post/get-post/${postId}`);
+    return response.data;
+}
+
+
+export const updatePostContent = async(postId : string, content : string) => {
+    const response = await api.patch(`/post/update-post-content/${postId}`, {content});
+    return response.data;
+}

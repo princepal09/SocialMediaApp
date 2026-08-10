@@ -8,7 +8,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import sanitizeHtml from "sanitize-html";
 
-
 export const createPost = async (req: Request, res: Response) => {
   try {
     const postImagePath = req.file?.path;
@@ -70,13 +69,7 @@ export const createPost = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          post,
-          "Post Uploaded Successfully"
-        )
-      );
+      .json(new ApiResponse(201, post, "Post Uploaded Successfully"));
   } catch (err: any) {
     console.error(err);
 
@@ -444,7 +437,6 @@ export const deletePost = async (req: Request, res: Response) => {
     const { postId } = req.params;
     const userId = req.user?._id;
 
-
     if (!postId) {
       throw new ApiError(401, "Post Id not found");
     }
@@ -468,6 +460,46 @@ export const deletePost = async (req: Request, res: Response) => {
       .status(200)
       .json(new ApiResponse(200, null, "Post deleted successfully"));
   } catch (err: any) {
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getPostById = async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ApiError(401, "Unauthorized");
+    }
+
+    if (!postId || !mongoose.isValidObjectId(postId)) {
+      throw new ApiError(400, "Invalid post ID");
+    }
+
+    const post = await Post.findOne({
+      _id: postId,
+      owner: userId,
+    });
+
+    if (!post) {
+      throw new ApiError(404, "Post not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, post, "Post fetched successfully"));
+  } catch (err: unknown) {
     if (err instanceof ApiError) {
       return res.status(err.status).json({
         success: false,

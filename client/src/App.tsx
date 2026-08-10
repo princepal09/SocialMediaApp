@@ -11,7 +11,7 @@ import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import ErrorPage from "./pages/ErrorPage";
 import UploadPostPage from "./pages/UploadPostPage";
-import EditPostImage from "./pages/EditPostImage";
+import EditPostImage from "./pages/EditPostPage";
 
 const App = () => {
   const dispatch = useDispatch();

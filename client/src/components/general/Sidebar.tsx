@@ -8,7 +8,6 @@ import { Home, LogOut, User2 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

@@ -19,14 +19,7 @@ const conversationSchema = new mongoose.Schema<IConversation>(
   { timestamps: true }
 );
 
-conversationSchema.index(
-  {
-    participants: 1,
-  },
-  {
-    unique: true,
-  }
-);
+
 
 export const Conversation = mongoose.model<IConversation>(
   "Conversation",

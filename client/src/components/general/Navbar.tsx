@@ -30,7 +30,7 @@ const Navbar = () => {
       </Link>
 
       {user ? (
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-3 md:gap-2">
           {user.profileImage ? (
             <Link to={`/profile/${user.username}`}>
               <img
@@ -50,13 +50,7 @@ const Navbar = () => {
               {user.username}
             </span>
           </Link>
-
-          <button
-            onClick={handleLogout}
-            className="px-3 md:px-4 py-1.5 md:py-2 rounded-md bg-red-500 hover:bg-[#8423c8] transition text-sm md:text-base"
-          >
-            Logout
-          </button>
+         
         </div>
       ) : (
         <User2 className="w-6 h-6" />

@@ -424,7 +424,7 @@ export const addBio = async (req: Request, res: Response) => {
 
 export const updateBio = async (req: Request, res: Response) => {
   try {
-    const {updateBio} = req.body;
+    const { updateBio } = req.body;
     if (!updateBio || updateBio === "") {
       throw new ApiError(400, "Bio is required");
     }
@@ -799,5 +799,37 @@ export const unfollowUser = async (req: Request, res: Response) => {
     if (session) {
       await session.endSession();
     }
+  }
+};
+
+export const getUserFollowers = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const user = await User.findById(userId).populate(
+      "followers",
+      "username profileImage"
+    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Followers Fetches Successfully"));
+  } catch (err: any) {
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        status: err.status,
+        success: false,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };

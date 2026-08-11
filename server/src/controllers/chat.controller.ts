@@ -22,6 +22,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
     let conversation = await Conversation.findOne({
       participants: {
         $all: participants,
+        $size: 2,
       },
     });
 
@@ -133,9 +134,21 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
+
+    const userId = req.user?._id;
+
     const { conversationId } = req.params;
     if (!conversationId) {
       throw new ApiError(404, "Conversationid not found");
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+    if(!conversation){
+      throw new ApiError(404, "Conversation not found")
+    }
+
+    if(!conversation.participants.some((id:any) => id.equlas(userId) )){
+      throw new ApiError(403, "Not Authorized");
     }
     const page = Number(req.query.page) || 1;
     const limit = 20;

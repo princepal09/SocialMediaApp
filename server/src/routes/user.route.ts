@@ -4,6 +4,7 @@ import {
   changeCurrentPassword,
   followUser,
   getCurrentUser,
+  getUserFollowers,
   getUserProfileData,
   unfollowUser,
   updateBio,
@@ -15,6 +16,7 @@ const router = express();
 
 //user
 router.get("/current-user", verifyUser, getCurrentUser);
+router.get("/get-followers", verifyUser, getUserFollowers);
 router.patch("/change-password", verifyUser, changeCurrentPassword);
 router.post("/follow/:username", verifyUser, followUser);
 router.post("/unfollow/:username", verifyUser, unfollowUser);

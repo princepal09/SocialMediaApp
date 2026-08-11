@@ -12,6 +12,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ErrorPage from "./pages/ErrorPage";
 import UploadPostPage from "./pages/UploadPostPage";
 import EditPostPage from "./pages/EditPostPage";
+import ChatPage from "./pages/ChatPage";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -89,6 +90,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <EditPostPage/>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat/:username/rcid/:recieverId"
+            element={
+              <ProtectedRoute>
+                <ChatPage/>
               </ProtectedRoute>
             }
           />

@@ -3,6 +3,7 @@ import { Follower } from "../../types/followers";
 import { toast } from "sonner";
 import { getMyFollowers } from "../../api/chat.api";
 import { MessageCircle } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
 
 const ChatBar = () => {
   const [followers, setFollowers] = useState<Follower[]>([]);
@@ -76,10 +77,12 @@ const ChatBar = () => {
         {!loading && followers.length > 0 && (
           <div className="space-y-1">
             {followers.map((follower) => (
-              <button
-                key={follower._id}
-                className="w-full flex items-center gap-3 p-3 rounded-xl
-                           hover:bg-zinc-900 transition text-left"
+              <NavLink
+                to={`/chat/${follower.username}/rcid/${follower._id}`}
+                className={({ isActive }) =>
+                  `w-full flex items-center gap-3 p-3 rounded-xl transition text-left
+     ${isActive ? "bg-zinc-800 text-white" : "hover:bg-zinc-900 text-zinc-300"}`
+                }
               >
                 {/* Avatar */}
                 <img
@@ -98,7 +101,7 @@ const ChatBar = () => {
                     Start a conversation
                   </p>
                 </div>
-              </button>
+              </NavLink>
             ))}
           </div>
         )}

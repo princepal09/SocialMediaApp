@@ -21,6 +21,13 @@ const conversationSchema = new mongoose.Schema<IConversation>(
 
 
 
+conversationSchema.pre("save", function(){
+    this.participants.sort((a:any, b:any) => {
+     return a.toString().localCompare(b.toString())
+    })
+})
+
+
 export const Conversation = mongoose.model<IConversation>(
   "Conversation",
   conversationSchema

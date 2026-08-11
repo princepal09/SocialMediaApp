@@ -42,11 +42,12 @@ messageSchema.pre("validate", function (next) {
 });
 
 messageSchema.pre("save", function (next) {
-  if (this.isNew && this.sender && this.seenBy?.length) {
+  if (this.isNew && this.sender && (!this.seenBy || this.seenBy.length === 0)) {
     this.seenBy = [this.sender];
   }
   next();
 });
+
 messageSchema.index({
   conversation: 1,
   createdAt: -1,

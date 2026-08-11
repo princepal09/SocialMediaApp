@@ -109,13 +109,11 @@ export const sendMessage = async (req: Request, res: Response) => {
       "username profileImage"
     );
 
-    return res.status(201).json(
-      new ApiResponse(
-        201,
-        populatedMessage,
-        "Message Sent Successfully"
-      )
-    );
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(201, populatedMessage, "Message Sent Successfully")
+      );
   } catch (err: any) {
     console.error(err);
 
@@ -134,23 +132,25 @@ export const sendMessage = async (req: Request, res: Response) => {
 };
 
 export const getMessages = async (req: Request, res: Response) => {
-    try{
-        const {conversationId} = req.params;
-        if(!conversationId){
-            throw new ApiError(404, "Conversationid not found")
-        }
-        const page = Number(req.query.page) || 1;
-        const limit = 20;
-        const skip = (page - 1) * limit;
-
-        const messages = await Message.find({conversation:conversationId}).populate("sender", "username profileImage").sort({createdAt : -1}).skip(skip).limit(limit)
-
-        return res.status(200).json(
-            new ApiResponse(200, messages, "Message fetches Successfully")
-        )
-
+  try {
+    const { conversationId } = req.params;
+    if (!conversationId) {
+      throw new ApiError(404, "Conversationid not found");
     }
-  catch (err: any) {
+    const page = Number(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const messages = await Message.find({ conversation: conversationId })
+      .populate("sender", "username profileImage")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, messages, "Message fetches Successfully"));
+  } catch (err: any) {
     console.error(err);
 
     if (err instanceof ApiError) {
@@ -166,3 +166,78 @@ export const getMessages = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const markSeen = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const { conversationId } = req.params;
+    if (!userId) {
+      throw new ApiError(404, "User Id not found");
+    }
+
+    if (!conversationId) {
+      throw new ApiError(404, "Conversation id not found");
+    }
+    await Message.updateMany(
+      { conversation: conversationId, seenBy: { $ne: userId } },
+      { $addToSet: { seenBy: userId } }
+    );
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Message Marked as seen"));
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getUserConversation = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    const conversations = await Conversation.find({
+      participants: userId,
+    })
+      .populate("participants", "username profileImage")
+      .populate({
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          select: "username profileImage",
+        },
+      })
+      .sort({ updatedAt: -1 });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, conversations, "Conversation fetched Successfully")
+      );
+  } catch (err: any) {
+    console.error(err);
+
+    if (err instanceof ApiError) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+

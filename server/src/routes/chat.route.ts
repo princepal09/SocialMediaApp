@@ -9,6 +9,6 @@ router.post("/conversation/:recieverId", verifyUser,  getOrCreateConversation);
 router.post("/message", verifyUser, upload.single("image"), sendMessage);
 router.get("/message/:conversationId" , verifyUser, getMessages);
 router.patch("/seen/:conversationId" , verifyUser, markSeen);
-router.get("/user-conversations/:conversationId" , verifyUser, getUserConversation);
+router.get("/user-conversations" , verifyUser, getUserConversation);
 
 export default router;

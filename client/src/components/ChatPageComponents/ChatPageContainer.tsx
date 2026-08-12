@@ -45,10 +45,6 @@ const ChatPageContainer = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ==============================
-  // INITIALIZE CHAT
-  // ==============================
-
   const initChat = async () => {
     if (!recieverId) return;
 
@@ -75,19 +71,11 @@ const ChatPageContainer = () => {
     initChat();
   }, [recieverId]);
 
-  // ==============================
-  // AUTO SCROLL
-  // ==============================
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
-
-  // ==============================
-  // IMAGE SELECT
-  // ==============================
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -118,10 +106,6 @@ const ChatPageContainer = () => {
     setImagePreview(previewUrl);
   };
 
-  // ==============================
-  // REMOVE IMAGE
-  // ==============================
-
   const removeImage = () => {
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
@@ -134,10 +118,6 @@ const ChatPageContainer = () => {
       fileInputRef.current.value = "";
     }
   };
-
-  // ==============================
-  // SEND MESSAGE
-  // ==============================
 
   const handleSend = async () => {
     const message = text.trim();
@@ -177,10 +157,6 @@ const ChatPageContainer = () => {
     }
   };
 
-  // ==============================
-  // ENTER TO SEND
-  // ==============================
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -194,10 +170,6 @@ const ChatPageContainer = () => {
   const currentUserInitial =
     currentUser?.username?.charAt(0).toUpperCase() || "U";
 
-  // ==============================
-  // LOADING
-  // ==============================
-
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-80px)] items-center justify-center bg-black">
@@ -205,10 +177,6 @@ const ChatPageContainer = () => {
       </div>
     );
   }
-
-  // ==============================
-  // UI
-  // ==============================
 
   return (
     <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden bg-black text-white">

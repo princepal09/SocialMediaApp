@@ -18,8 +18,8 @@ interface ReceiverState {
 }
 
 const ChatPageContainer = () => {
-  const { recieverId, username } = useParams<{
-    recieverId: string;
+  const { receiverId, username } = useParams<{
+    receiverId: string;
     username: string;
   }>();
 
@@ -47,12 +47,12 @@ const ChatPageContainer = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const initChat = async () => {
-    if (!recieverId) return;
+    if (!receiverId) return;
 
     setLoading(true);
 
     try {
-      const response = await getOrCreateConversations(recieverId);
+      const response = await getOrCreateConversations(receiverId);
 
       const id = response.data._id;
 
@@ -70,7 +70,7 @@ const ChatPageContainer = () => {
 
   useEffect(() => {
     initChat();
-  }, [recieverId]);
+  }, [receiverId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({

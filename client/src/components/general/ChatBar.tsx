@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getMyFollowers, getUserConversations } from "../../api/chat.api";
+import { getUserConversations } from "../../api/chat.api";
 import { MessageCircle } from "lucide-react";
-import { Link, Navigate, NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { Conversastion } from "../../types/chat";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
@@ -10,7 +10,6 @@ import { RootState } from "../../store/store";
 const ChatBar = () => {
   const [conversations, setConversations] = useState<Conversastion[]>([]);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
   const loadConversations = async () => {
@@ -29,8 +28,6 @@ const ChatBar = () => {
   useEffect(() => {
     loadConversations();
   }, []);
-
-  
 
   return (
     <aside className="w-72 shrink-0 h-full text-white flex flex-col">

@@ -5,7 +5,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 const router = express();
 
 
-router.post("/conversation/:recieverId", verifyUser,  getOrCreateConversation);
+router.post("/conversation/:receiverId", verifyUser,  getOrCreateConversation);
 router.post("/message", verifyUser, upload.single("image"), sendMessage);
 router.get("/messages/:conversationId" , verifyUser, getMessages);
 router.patch("/seen/:conversationId" , verifyUser, markSeen);

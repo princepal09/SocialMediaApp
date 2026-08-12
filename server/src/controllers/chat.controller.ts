@@ -8,17 +8,16 @@ import { uploadToCloudinary } from "../utils/cloudinary.js";
 export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { recieverId } = req.params;
-    console.log(userId, recieverId);
+    const { receiverId } = req.params;
 
-    if (!userId || !recieverId) {
+    if (!userId || !receiverId) {
       throw new ApiError(404, "Invalid Users");
     }
-    if (userId.toString() === recieverId.toString()) {
+    if (userId.toString() === receiverId.toString()) {
       throw new ApiError(400, "Cannot chat with yourself");
     }
 
-    const participants = [userId, recieverId].sort();
+    const participants = [userId, receiverId].sort();
 
     let conversation = await Conversation.findOne({
       participants: {

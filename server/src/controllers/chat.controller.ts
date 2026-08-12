@@ -147,7 +147,7 @@ export const getMessages = async (req: Request, res: Response) => {
       throw new ApiError(404, "Conversation not found")
     }
 
-    if(!conversation.participants.some((id:any) => id.equlas(userId) )){
+    if(!conversation.participants.some((id:any) => id.equals(userId) )){
       throw new ApiError(403, "Not Authorized");
     }
     const page = Number(req.query.page) || 1;
@@ -253,3 +253,4 @@ export const getUserConversation = async (req: Request, res: Response) => {
     });
   }
 };
+

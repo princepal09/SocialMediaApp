@@ -16,3 +16,13 @@ export const getOrCreateConversations = async (recieverId: string) => {
   const response = await api.post(`/chat/conversation/${recieverId}`);
   return response.data;
 };
+
+export const getMessages = async (conversationId: string) => {
+  const response = await api.get(`/chat/messages/${conversationId}`);
+  return response.data;
+};
+
+export const sendMessage = async(data : FormData) => {
+  const response = await api.post(`/chat/message`, data);
+  return response.data;
+}

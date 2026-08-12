@@ -11,7 +11,7 @@ const ChatBar = () => {
   const [conversations, setConversations] = useState<Conversastion[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loggedInUser = useSelector((state :RootState) => state.auth.user);
+  const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
   const loadConversations = async () => {
     setLoading(true);
@@ -69,7 +69,9 @@ const ChatBar = () => {
               <MessageCircle size={24} className="text-zinc-500" />
             </div>
 
-            <p className="text-sm font-medium text-zinc-300">No followers</p>
+            <p className="text-sm font-medium text-zinc-300">
+              No Conversations
+            </p>
 
             <p className="text-xs text-zinc-500 mt-1">
               Follow someone to start a conversation
@@ -81,13 +83,18 @@ const ChatBar = () => {
         {!loading && conversations.length > 0 && (
           <div className="space-y-1">
             {conversations.map((conversation) => {
-              const otherUser = conversation.participants.find((p) => p._id !== loggedInUser?._id)
+              const otherUser = conversation.participants.find(
+                (p) => p._id !== loggedInUser?._id,
+              );
               // console.log(otherUser);
 
               return (
                 <NavLink
                   key={conversation._id}
-                  to={`/chat/${otherUser?.username}/rcid/${otherUser?._id}`}
+                  to={`/chat/${otherUser?.username}/rcid/${otherUser?._id}/cid/${conversation._id}`}
+                  state={{
+                    profileImage: otherUser?.profileImage,
+                  }}
                   className={({ isActive }) =>
                     `w-full flex items-center gap-3 p-3 rounded-xl transition text-left ${
                       isActive

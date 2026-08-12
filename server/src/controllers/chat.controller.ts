@@ -9,6 +9,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     const { recieverId } = req.params;
+    console.log(userId, recieverId);
 
     if (!userId || !recieverId) {
       throw new ApiError(404, "Invalid Users");

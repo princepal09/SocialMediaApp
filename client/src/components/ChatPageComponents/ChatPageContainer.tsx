@@ -23,6 +23,7 @@ const ChatPageContainer = () => {
     username: string;
   }>();
 
+
   const location = useLocation();
 
   const receiver = location.state as ReceiverState | null;

@@ -12,8 +12,8 @@ export const getUserConversations = async () => {
   return response.data;
 };
 
-export const getOrCreateConversations = async (recieverId: string) => {
-  const response = await api.post(`/chat/conversation/${recieverId}`);
+export const getOrCreateConversations = async (receiverId: string) => {
+  const response = await api.post(`/chat/conversation/${receiverId}`);
   return response.data;
 };
 

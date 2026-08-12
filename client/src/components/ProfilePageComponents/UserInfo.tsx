@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Pencil } from "lucide-react";
 import { setUser } from "../../store/slices/authSlice";
+import { Link } from "react-router-dom";
 
 interface UserInfoProps {
   user: IUserProfileInfo;
@@ -215,9 +216,11 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
               {loading ? "Please wait..." : isFollowing ? "Unfollow" : "Follow"}
             </button>
 
-            <button className="px-5 py-2 rounded-xl border border-zinc-700 text-white text-sm hover:bg-zinc-900 transition">
-              Message
-            </button>
+            <Link to={`/chat/${user._id}`}>
+              <button className="px-5 py-2 rounded-xl border border-zinc-700 text-white text-sm hover:bg-zinc-900 transition">
+                Message
+              </button>
+            </Link>
           </div>
         )}
       </div>

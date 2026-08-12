@@ -69,6 +69,8 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     const { conversationId, text } = req.body;
 
+    const messageText = text?.trim();
+
     if (!conversationId) {
       throw new ApiError(404, "Conversation id not found");
     }
@@ -96,7 +98,7 @@ export const sendMessage = async (req: Request, res: Response) => {
     const message = await Message.create({
       conversation: conversationId,
       sender: senderId,
-      text,
+      ...(messageText && { text: messageText }),
       ...(image && { image: image.secure_url }),
       seenBy: [senderId],
     });
@@ -134,7 +136,6 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
-
     const userId = req.user?._id;
 
     const { conversationId } = req.params;
@@ -143,11 +144,11 @@ export const getMessages = async (req: Request, res: Response) => {
     }
 
     const conversation = await Conversation.findById(conversationId);
-    if(!conversation){
-      throw new ApiError(404, "Conversation not found")
+    if (!conversation) {
+      throw new ApiError(404, "Conversation not found");
     }
 
-    if(!conversation.participants.some((id:any) => id.equals(userId) )){
+    if (!conversation.participants.some((id: any) => id.equals(userId))) {
       throw new ApiError(403, "Not Authorized");
     }
     const page = Number(req.query.page) || 1;
@@ -253,4 +254,3 @@ export const getUserConversation = async (req: Request, res: Response) => {
     });
   }
 };
-

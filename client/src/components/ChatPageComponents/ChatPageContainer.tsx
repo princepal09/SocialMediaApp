@@ -10,7 +10,7 @@ import {
 import Spinner from "../general/Spinner";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { Send } from "lucide-react";
+import { Send, Image as ImageIcon, X } from "lucide-react";
 
 interface ReceiverState {
   username?: string;
@@ -33,6 +33,9 @@ const ChatPageContainer = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -40,6 +43,11 @@ const ChatPageContainer = () => {
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ==============================
+  // INITIALIZE CHAT
+  // ==============================
 
   const initChat = async () => {
     if (!recieverId) return;
@@ -67,16 +75,76 @@ const ChatPageContainer = () => {
     initChat();
   }, [recieverId]);
 
+  // ==============================
+  // AUTO SCROLL
+  // ==============================
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
 
+  // ==============================
+  // IMAGE SELECT
+  // ==============================
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    // Only images
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image");
+      return;
+    }
+
+    // 5MB limit
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5MB");
+      return;
+    }
+
+    // Remove previous preview URL
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImage(file);
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setImagePreview(previewUrl);
+  };
+
+  // ==============================
+  // REMOVE IMAGE
+  // ==============================
+
+  const removeImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+
+    setImage(null);
+    setImagePreview(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // ==============================
+  // SEND MESSAGE
+  // ==============================
+
   const handleSend = async () => {
     const message = text.trim();
 
-    if (!conversationId || !message || sending) return;
+    if (!conversationId || (!message && !image) || sending) {
+      return;
+    }
 
     setSending(true);
 
@@ -84,12 +152,22 @@ const ChatPageContainer = () => {
       const formData = new FormData();
 
       formData.append("conversationId", conversationId);
-      formData.append("text", message);
+
+      if (message) {
+        formData.append("text", message);
+      }
+
+      if (image) {
+        formData.append("image", image);
+      }
 
       const response = await sendMessage(formData);
 
       setMessages((prev) => [...prev, response.data]);
+
       setText("");
+
+      removeImage();
 
       inputRef.current?.focus();
     } catch (err: any) {
@@ -99,9 +177,14 @@ const ChatPageContainer = () => {
     }
   };
 
+  // ==============================
+  // ENTER TO SEND
+  // ==============================
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+
       handleSend();
     }
   };
@@ -111,6 +194,10 @@ const ChatPageContainer = () => {
   const currentUserInitial =
     currentUser?.username?.charAt(0).toUpperCase() || "U";
 
+  // ==============================
+  // LOADING
+  // ==============================
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-80px)] items-center justify-center bg-black">
@@ -119,12 +206,18 @@ const ChatPageContainer = () => {
     );
   }
 
+  // ==============================
+  // UI
+  // ==============================
+
   return (
     <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden bg-black text-white">
       {/* ================= HEADER ================= */}
+
       <header className="flex items-center justify-between border-b border-white/10 bg-black px-5 py-4">
         <div className="flex items-center gap-3">
           {/* Receiver Avatar */}
+
           <div className="relative">
             <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-semibold text-white ring-2 ring-white/10">
               {receiverProfileImage ? (
@@ -137,27 +230,24 @@ const ChatPageContainer = () => {
                 receiverInitial
               )}
             </div>
-
-            {/* Online indicator */}
-            {/* <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-black bg-green-500" /> */}
           </div>
 
           {/* Receiver Info */}
+
           <div className="min-w-0">
             <h2 className="truncate text-sm font-semibold text-white">
               {receiverName}
             </h2>
-
-            {/* <p className="text-xs text-green-400">Active now</p> */}
           </div>
         </div>
-       
       </header>
 
       {/* ================= MESSAGES ================= */}
+
       <main className="flex-1 overflow-y-auto bg-black px-4 py-6 sm:px-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           {/* Empty state */}
+
           {messages.length === 0 && (
             <div className="flex flex-1 flex-col items-center justify-center py-24 text-center">
               <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl font-bold ring-4 ring-white/5">
@@ -183,6 +273,7 @@ const ChatPageContainer = () => {
           )}
 
           {/* Message list */}
+
           {messages.map((message: Message) => {
             const isMine = message.sender?._id === currentUser?._id;
 
@@ -194,6 +285,7 @@ const ChatPageContainer = () => {
                 }`}
               >
                 {/* Receiver avatar */}
+
                 {!isMine && (
                   <div className="mb-1 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-semibold text-white">
                     {receiverProfileImage ? (
@@ -209,34 +301,42 @@ const ChatPageContainer = () => {
                 )}
 
                 {/* Message */}
+
                 <div
                   className={`group max-w-[75%] sm:max-w-[65%] ${
                     isMine ? "items-end" : "items-start"
                   }`}
                 >
                   <div
-                    className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-lg ${
+                    className={`overflow-hidden rounded-2xl text-sm leading-relaxed shadow-lg ${
                       isMine
                         ? "rounded-br-md bg-[#9929EA] text-white"
                         : "rounded-bl-md border border-white/5 bg-zinc-900 text-gray-200"
                     }`}
                   >
+                    {/* Text */}
+
                     {message.text && (
-                      <p className="break-words whitespace-pre-wrap">
+                      <p className="px-4 py-2.5 break-words whitespace-pre-wrap">
                         {message.text}
                       </p>
                     )}
+
+                    {/* Image */}
 
                     {message.image && (
                       <img
                         src={message.image}
                         alt="Message attachment"
-                        className="mt-1 max-h-80 max-w-xs rounded-xl object-cover"
+                        className={`block max-h-96 max-w-full object-cover ${
+                          message.text ? "border-t border-white/10" : ""
+                        }`}
                       />
                     )}
                   </div>
 
                   {/* Time */}
+
                   {message.createdAt && (
                     <p
                       className={`mt-1 px-1 text-[10px] text-gray-600 ${
@@ -252,6 +352,7 @@ const ChatPageContainer = () => {
                 </div>
 
                 {/* Current user avatar */}
+
                 {isMine && (
                   <div className="mb-1 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-800 text-xs font-semibold text-gray-300">
                     {currentUser?.profileImage ? (
@@ -274,10 +375,61 @@ const ChatPageContainer = () => {
       </main>
 
       {/* ================= INPUT ================= */}
+
       <footer className="border-t border-white/10 bg-black px-4 py-4 sm:px-6">
         <div className="mx-auto max-w-3xl">
+          {/* Image Preview */}
+
+          {imagePreview && (
+            <div className="mb-3 flex items-center gap-3">
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Selected image"
+                  className="h-20 w-20 rounded-xl object-cover ring-1 ring-white/10"
+                />
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  disabled={sending}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="text-xs text-gray-500">Image selected</div>
+            </div>
+          )}
+
+          {/* Input Container */}
+
           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950 p-2 shadow-xl">
-            {/* Input */}
+            {/* Hidden file input */}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+
+            {/* Image button */}
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sending}
+              className="flex h-10 cursor-pointer w-10 shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-zinc-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              title="Send image"
+            >
+              <ImageIcon size={19} />
+            </button>
+
+            {/* Text input */}
+
             <input
               ref={inputRef}
               type="text"
@@ -290,16 +442,17 @@ const ChatPageContainer = () => {
             />
 
             {/* Send button */}
+
             <button
               type="button"
               onClick={handleSend}
-              disabled={!text.trim() || sending}
+              disabled={(!text.trim() && !image) || sending}
               className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-gray-600"
             >
               {sending ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               ) : (
-               <Send size={15}/>
+                <Send size={15} />
               )}
 
               <span className="hidden sm:inline">

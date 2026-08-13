@@ -128,7 +128,7 @@ const RegisterUserForm = () => {
           htmlFor="profilePicture"
           className="text-sm font-medium text-gray-300"
         >
-          Profile Picture <span className="text-red-400">*</span>
+          Profile Picture 
         </label>
 
         <input

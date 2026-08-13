@@ -12,7 +12,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Pencil } from "lucide-react";
 import { setUser } from "../../store/slices/authSlice";
-import { Link } from "react-router-dom";
+import { getOrCreateConversations } from "../../api/chat.api";
+import { useNavigate } from "react-router-dom";
 
 interface UserInfoProps {
   user: IUserProfileInfo;
@@ -32,6 +33,8 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isOwnProfile = loggedInUser?.username === user.username;
 
+  const [messageLoading, setMessageLoading] = useState(false);
+
   const [isEditing, setIsEditing] = useState(false);
   const [bioInput, setBioInput] = useState(user.bio || "");
   const [bioLoading, setBioLoading] = useState(false);
@@ -40,6 +43,8 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   const handlePickImage = () => {
     fileInputRef.current?.click();
   };
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     setBioInput(user.bio || "");
@@ -82,6 +87,23 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       toast.error(err?.message || "Something went wrong");
     } finally {
       setBioLoading(false);
+    }
+  };
+
+  const handleClickMessage = async () => {
+    setMessageLoading(true);
+    try {
+      const response = await getOrCreateConversations(user._id);
+      navigate(
+        `/chat/${user.username}/rcid/${user._id}/cid/${response.data._id}`,
+        {
+          state: {
+            profileImage: user?.profileImage,
+          },
+        },
+      );
+    } catch (err: any) {
+      toast.error(err.messsage || "Cannot send message");
     }
   };
 
@@ -205,7 +227,7 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
               className={`
           px-5 py-2 rounded-xl text-sm font-medium text-white
           transition-all duration-300 active:scale-95
-          disabled:opacity-60 disabled:cursor-not-allowed
+          disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed
           ${
             isFollowing
               ? "bg-zinc-700 hover:bg-red-600"
@@ -216,11 +238,14 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
               {loading ? "Please wait..." : isFollowing ? "Unfollow" : "Follow"}
             </button>
 
-            <Link to={`/chat/${user._id}`}>
-              <button className="px-5 py-2 rounded-xl border border-zinc-700 text-white text-sm hover:bg-zinc-900 transition">
-                Message
-              </button>
-            </Link>
+            <button
+              disabled={messageLoading}
+              onClick={handleClickMessage}
+              className="px-5 py-2 cursor-pointer rounded-xl border border-zinc-700 text-white text-sm transition-colors hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              
+              Message
+            </button>
           </div>
         )}
       </div>

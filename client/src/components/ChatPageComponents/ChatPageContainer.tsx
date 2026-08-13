@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Message } from "../../types/chat";
 import { toast } from "sonner";
+import { socket } from "../../socket";
 import {
   getMessages,
   getOrCreateConversations,
@@ -22,7 +23,6 @@ const ChatPageContainer = () => {
     receiverId: string;
     username: string;
   }>();
-
 
   const location = useLocation();
 
@@ -53,7 +53,6 @@ const ChatPageContainer = () => {
 
     try {
       const response = await getOrCreateConversations(receiverId);
-
       const id = response.data._id;
 
       setConversationId(id);
@@ -67,6 +66,26 @@ const ChatPageContainer = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+     if(!conversationId) return;
+     socket.emit("join_conversation", conversationId);
+
+     const handleNewMessage = (msg:Message) =>{
+      setMessages((prev) => {
+        if(prev.some((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      })
+     }
+
+     socket.on("new_message", handleNewMessage);
+
+     return ()=>{
+      socket.off("new_message", handleNewMessage);
+      socket.emit("leave_conversation", conversationId);
+     }
+
+  }, [conversationId])
 
   useEffect(() => {
     initChat();
@@ -144,7 +163,6 @@ const ChatPageContainer = () => {
 
       const response = await sendMessage(formData);
 
-      setMessages((prev) => [...prev, response.data]);
 
       setText("");
 
@@ -184,35 +202,32 @@ const ChatPageContainer = () => {
       {/* ================= HEADER ================= */}
 
       <header className="flex items-center justify-between border-b border-white/10 bg-black px-5 py-4">
-          <Link to={`/profile/${receiverName}`}>
-        <div className="flex items-center gap-3">
-          {/* Receiver Avatar */}
-          <div className="relative">
-           
-           
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-semibold text-white ring-2 ring-white/10">
-              {receiverProfileImage ? (
-                <img
-                  src={receiverProfileImage}
-                  alt={receiverName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                receiverInitial
-              )}
+        <Link to={`/profile/${receiverName}`}>
+          <div className="flex items-center gap-3">
+            {/* Receiver Avatar */}
+            <div className="relative">
+              <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-semibold text-white ring-2 ring-white/10">
+                {receiverProfileImage ? (
+                  <img
+                    src={receiverProfileImage}
+                    alt={receiverName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  receiverInitial
+                )}
+              </div>
             </div>
-             
-          </div>
 
-          {/* Receiver Info */}
+            {/* Receiver Info */}
 
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-white">
-              {receiverName}
-            </h2>
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-semibold text-white">
+                {receiverName}
+              </h2>
+            </div>
           </div>
-        </div>
-          </Link>
+        </Link>
       </header>
 
       {/* ================= MESSAGES ================= */}

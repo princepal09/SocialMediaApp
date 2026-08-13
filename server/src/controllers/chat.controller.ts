@@ -4,6 +4,7 @@ import { Message } from "../models/message.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { io } from "../index.js";
 
 export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
@@ -111,6 +112,8 @@ export const sendMessage = async (req: Request, res: Response) => {
       "sender",
       "username profileImage"
     );
+
+    io.to(conversationId.toString()).emit("new_message", populatedMessage);
 
     return res
       .status(201)

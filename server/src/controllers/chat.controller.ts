@@ -27,6 +27,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       },
     });
 
+
     if (!conversation) {
       conversation = await Conversation.create({ participants });
       return res
@@ -39,6 +40,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
           )
         );
     }
+   
 
     return res
       .status(200)

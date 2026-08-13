@@ -103,14 +103,15 @@ const ChatBar = () => {
                   }
                 >
                   {/* Avatar */}
-                  {
-                    otherUser?.profileImage ? ( <img
-                    src={otherUser?.profileImage}
-                    alt={otherUser?.username}
-                    className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                  />) : (<User2/>)
-                  }
-                 
+                  {otherUser?.profileImage ? (
+                    <img
+                      src={otherUser?.profileImage}
+                      alt={otherUser?.username}
+                      className="w-11 h-11 rounded-full object-cover border border-zinc-800"
+                    />
+                  ) : (
+                    <User2 />
+                  )}
 
                   {/* User info */}
                   <div className="flex-1 min-w-0">

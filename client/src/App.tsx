@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import { useDispatch } from "react-redux";
+import { useDispatch,  } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
 import { setLogout, setUser } from "./store/slices/authSlice";
@@ -13,6 +13,7 @@ import ErrorPage from "./pages/ErrorPage";
 import UploadPostPage from "./pages/UploadPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import ChatPage from "./pages/ChatPage";
+
 
 const App = () => {
   const dispatch = useDispatch();
@@ -30,6 +31,8 @@ const App = () => {
   useEffect(() => {
     loadCurrentUser();
   }, [dispatch]);
+
+
 
   return (
     <>
@@ -80,7 +83,7 @@ const App = () => {
             path="/upload-post"
             element={
               <ProtectedRoute>
-                <UploadPostPage/>
+                <UploadPostPage />
               </ProtectedRoute>
             }
           />
@@ -89,7 +92,7 @@ const App = () => {
             path="/profile/:username/post/edit/:postId"
             element={
               <ProtectedRoute>
-                <EditPostPage/>
+                <EditPostPage />
               </ProtectedRoute>
             }
           />
@@ -97,12 +100,12 @@ const App = () => {
             path="/chat/:username/rcid/:receiverId/cid/:conversationId"
             element={
               <ProtectedRoute>
-                <ChatPage/>
+                <ChatPage />
               </ProtectedRoute>
             }
           />
-           {/* 404 Route - Keep this last */}
-        <Route path="*" element={<ErrorPage />} />
+          {/* 404 Route - Keep this last */}
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
     </>

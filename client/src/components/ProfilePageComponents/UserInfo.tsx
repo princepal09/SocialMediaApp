@@ -104,6 +104,8 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       );
     } catch (err: any) {
       toast.error(err.messsage || "Cannot send message");
+    }finally{
+      setMessageLoading(false);
     }
   };
 
@@ -213,7 +215,6 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
           {/* User Info */}
           <div>
             <h1 className="text-2xl font-bold text-white">@{user?.username}</h1>
-
             <p className="text-sm text-zinc-400">{user?.email}</p>
           </div>
         </div>

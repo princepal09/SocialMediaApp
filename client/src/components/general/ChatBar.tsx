@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getUserConversations } from "../../api/chat.api";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, User2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Conversastion } from "../../types/chat";
 import { useSelector } from "react-redux";
@@ -103,11 +103,14 @@ const ChatBar = () => {
                   }
                 >
                   {/* Avatar */}
-                  <img
+                  {
+                    otherUser?.profileImage ? ( <img
                     src={otherUser?.profileImage}
                     alt={otherUser?.username}
                     className="w-11 h-11 rounded-full object-cover border border-zinc-800"
-                  />
+                  />) : (<User2/>)
+                  }
+                 
 
                   {/* User info */}
                   <div className="flex-1 min-w-0">

@@ -1,10 +1,11 @@
 import { app } from "./app.js";
 import dotenv from "dotenv";
 import dbConnect from "./config/db.js";
-const PORT = env.PORT || 4001;
+const PORT = env.PORT;
 import http from "http";
 import { Server } from "socket.io";
 import { env } from "./constants.js";
+import { connectRedis } from "./config/redis.js";
 
 const server = http.createServer(app);
 
@@ -40,7 +41,8 @@ io.on("connection", (socket) => {
 });
 
 dbConnect()
-  .then(() => {
+  .then(async() => {
+    await connectRedis();
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

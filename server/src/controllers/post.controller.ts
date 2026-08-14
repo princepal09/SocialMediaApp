@@ -8,6 +8,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import sanitizeHtml from "sanitize-html";
 import { io } from "../index.js";
+import { redisClient } from "../config/redis.js";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
@@ -68,23 +69,26 @@ export const createPost = async (req: Request, res: Response) => {
       },
     });
 
-    const populatedPost = await Post.findById(post._id).populate("owner", "username profileImage").lean();
+    const populatedPost = await Post.findById(post._id)
+      .populate("owner", "username profileImage")
+      .lean();
 
-    if(!populatedPost){
+    if (!populatedPost) {
       throw new ApiError(500, "Failed to populate post");
     }
 
     const formattedPost = {
       ...populatedPost,
-      likes : [],
-      likeCount : 0,
-      commentsCount : 0,
-      comments : []
-    } 
+      likes: [],
+      likeCount: 0,
+      commentsCount: 0,
+      comments: [],
+    };
 
-    io.emit("new_post", formattedPost)
+    io.emit("new_post", formattedPost);
 
-
+    await redisClient.del("home:posts");
+    await redisClient.del(`user:posts:${user.username}`);
 
     return res
       .status(201)
@@ -112,6 +116,24 @@ export const createPost = async (req: Request, res: Response) => {
 //here i need to implement the mongodb aggregation pipeline to get the comments
 export const getAllPostsForHome = async (req: Request, res: Response) => {
   try {
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ApiError(401, "Not authorized");
+    }
+
+    const cacheKey = "home:posts";
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            JSON.parse(cachedData),
+            "Posts fetched from cache"
+          )
+        );
+    }
     const posts = await Post.aggregate([
       {
         $lookup: {
@@ -217,6 +239,10 @@ export const getAllPostsForHome = async (req: Request, res: Response) => {
       },
     ]);
 
+    await redisClient.set(cacheKey, JSON.stringify(posts), {
+      EX: 60,
+    });
+
     // console.log(posts);
     return res
       .status(200)
@@ -246,6 +272,21 @@ export const getUserPosts = async (req: Request, res: Response) => {
     const { username } = req.params;
     if (!username) {
       throw new ApiError(401, "User Not Found");
+    }
+
+    const cacheKey = `user/posts:${username}`;
+    const cachedData = await redisClient.get(cacheKey);
+
+    if (cachedData) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            JSON.parse(cachedData),
+            "User posts fetched from cache"
+          )
+        );
     }
 
     const userPosts = await Post.aggregate([
@@ -373,6 +414,10 @@ export const getUserPosts = async (req: Request, res: Response) => {
       },
     ]);
 
+    await redisClient.set(cacheKey, JSON.stringify(userPosts), {
+      EX: 60,
+    });
+
     return res
       .status(200)
       .json(new ApiResponse(200, userPosts, "User Posts Fetched Successfully"));
@@ -427,6 +472,9 @@ export const updatePostContent = async (req: Request, res: Response) => {
 
     post.content = content;
     await post.save({ validateBeforeSave: false });
+
+    await redisClient.del("home:posts");
+    await redisClient.del(`user:posts:${req.user?.username}`);
 
     return res
       .status(200)
@@ -486,6 +534,9 @@ export const deletePost = async (req: Request, res: Response) => {
       });
     }
 
+    await redisClient.del("home:posts");
+    await redisClient.del(`user:posts:${req.user?.username}`);
+
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -531,4 +582,4 @@ export const getPostById = async (req: Request, res: Response) => {
       message: "Internal Server Error",
     });
   }
-};
+};  

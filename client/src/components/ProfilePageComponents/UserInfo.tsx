@@ -121,7 +121,7 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       return;
     }
 
-    const formData = new FormData();
+    const formData = new FormData();npm
     formData.append("profileImage", file);
 
     setImageUploading(true);

@@ -2,16 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Message } from "../../types/chat";
 import { toast } from "sonner";
-import { socket } from "../../socket";
+import { getSocket } from "../../socket";
+
 import {
   getMessages,
   getOrCreateConversations,
   sendMessage,
+  markSeen,
 } from "../../api/chat.api";
 import Spinner from "../general/Spinner";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { Send, Image as ImageIcon, X } from "lucide-react";
+import { Send, Image as ImageIcon, X, LoaderCircle } from "lucide-react";
 
 interface ReceiverState {
   username?: string;
@@ -60,6 +62,7 @@ const ChatPageContainer = () => {
       const msgs = await getMessages(id);
 
       setMessages([...msgs.data].reverse());
+      await markSeen(response.data._id);
     } catch (err: any) {
       toast.error(err?.message || "Failed to fetch messages");
     } finally {
@@ -68,24 +71,29 @@ const ChatPageContainer = () => {
   };
 
   useEffect(() => {
-     if(!conversationId) return;
-     socket.emit("join_conversation", conversationId);
+    if (!conversationId) return;
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emit("join_conversation", conversationId);
 
-     const handleNewMessage = (msg:Message) =>{
+    const handleNewMessage = async(msg: Message) => {
       setMessages((prev) => {
-        if(prev.some((m) => m._id === msg._id)) return prev;
+        if (prev.some((m) => m._id === msg._id)) return prev;
         return [...prev, msg];
-      })
-     }
+      });
 
-     socket.on("new_message", handleNewMessage);
+      if (msg.sender._id !== currentUser?._id) {
+        await markSeen(conversationId);
+      }
+    };
 
-     return ()=>{
+    socket.on("new_message", handleNewMessage);
+
+    return () => {
       socket.off("new_message", handleNewMessage);
       socket.emit("leave_conversation", conversationId);
-     }
-
-  }, [conversationId])
+    };
+  }, [conversationId]);
 
   useEffect(() => {
     initChat();
@@ -162,7 +170,6 @@ const ChatPageContainer = () => {
       }
 
       const response = await sendMessage(formData);
-
 
       setText("");
 
@@ -395,7 +402,6 @@ const ChatPageContainer = () => {
 
           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950 p-2 shadow-xl">
             {/* Hidden file input */}
-
             <input
               ref={fileInputRef}
               type="file"
@@ -403,9 +409,7 @@ const ChatPageContainer = () => {
               className="hidden"
               onChange={handleImageChange}
             />
-
             {/* Image button */}
-
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -415,9 +419,7 @@ const ChatPageContainer = () => {
             >
               <ImageIcon size={19} />
             </button>
-
             {/* Text input */}
-
             <input
               ref={inputRef}
               type="text"
@@ -428,24 +430,21 @@ const ChatPageContainer = () => {
               disabled={sending}
               className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm text-white outline-none placeholder:text-gray-600 disabled:cursor-not-allowed"
             />
-
             {/* Send button */}
-
             <button
               type="button"
               onClick={handleSend}
               disabled={(!text.trim() && !image) || sending}
-              className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-gray-600"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white transition-all duration-200 hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-gray-600"
             >
               {sending ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <LoaderCircle size={18} className="animate-spin" />
               ) : (
-                <Send size={15} />
+                <Send
+                  size={17}
+                  className="transition-transform duration-200 hover:translate-x-0.5 hover:-translate-y-0.5"
+                />
               )}
-
-              <span className="hidden sm:inline">
-                {sending ? "Sending" : "Send"}
-              </span>
             </button>
           </div>
         </div>

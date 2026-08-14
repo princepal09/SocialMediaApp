@@ -18,6 +18,12 @@ export const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  const userId = socket.handshake.query.userId as string;
+  if (userId) {
+    socket.join(userId);
+    console.log("User joined personal room ", userId);
+  }
+
   socket.on("join_conversation", (conversationId: string) => {
     socket.join(conversationId);
     console.log("User joined conversation:", conversationId);

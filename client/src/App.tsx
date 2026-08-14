@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
-import { useDispatch,  } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
 import { setLogout, setUser } from "./store/slices/authSlice";
@@ -13,10 +13,13 @@ import ErrorPage from "./pages/ErrorPage";
 import UploadPostPage from "./pages/UploadPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import ChatPage from "./pages/ChatPage";
-
+import { RootState } from "./store/store";
+import { connectSocket, disconnectSocket } from "./socket";
 
 const App = () => {
   const dispatch = useDispatch();
+
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const loadCurrentUser = async () => {
     try {
@@ -32,7 +35,15 @@ const App = () => {
     loadCurrentUser();
   }, [dispatch]);
 
+  useEffect(() => {
 
+    if(!user?._id) return;
+    const socket = connectSocket(user?._id);
+
+    return () => {
+      socket?.disconnect();
+    };
+  }, [user?._id]);
 
   return (
     <>

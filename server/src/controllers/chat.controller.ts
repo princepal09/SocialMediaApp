@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { io } from "../index.js";
+import { BooleanSchemaDefinition } from "mongoose";
 
 export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
@@ -27,9 +28,13 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       },
     });
 
+    let isNew : boolean = false;
+
+
 
     if (!conversation) {
       conversation = await Conversation.create({ participants });
+      isNew = true;
       return res
         .status(201)
         .json(
@@ -40,7 +45,16 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
           )
         );
     }
-   
+
+
+    if(isNew){
+      participants.forEach((participantId : any) => {
+        io.to(participantId.toString()).emit("conversation_created");
+      })
+    }
+
+    
+    
 
     return res
       .status(200)
@@ -116,6 +130,11 @@ export const sendMessage = async (req: Request, res: Response) => {
     );
 
     io.to(conversationId.toString()).emit("new_message", populatedMessage);
+
+    conversation.participants.forEach((participantId : any) => {
+      io.to(participantId.toString()).emit("conversation_updated");
+
+    })
 
     return res
       .status(201)
@@ -202,6 +221,8 @@ export const markSeen = async (req: Request, res: Response) => {
       { $addToSet: { seenBy: userId } }
     );
 
+    io.to(userId.toString()).emit("conversation_updated");
+
     return res
       .status(200)
       .json(new ApiResponse(200, null, "Message Marked as seen"));
@@ -238,10 +259,25 @@ export const getUserConversation = async (req: Request, res: Response) => {
       })
       .sort({ updatedAt: -1 });
 
+      const conversationsWithUnread = await Promise.all(
+        conversations.map(async(conv) => {
+          const unreadCount = await Message.countDocuments({
+            conversation : conv._id,
+            seenBy : {$ne : userId},
+          });
+
+          return {
+            ...conv.toObject(),
+            unreadCount
+          }
+
+        })
+      )
+
     return res
       .status(200)
       .json(
-        new ApiResponse(200, conversations, "Conversation fetched Successfully")
+        new ApiResponse(200, conversationsWithUnread, "Conversation fetched Successfully")
       );
   } catch (err: any) {
     console.error(err);

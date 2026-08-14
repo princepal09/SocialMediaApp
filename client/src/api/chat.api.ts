@@ -11,6 +11,10 @@ export const getUserConversations = async () => {
 
   return response.data;
 };
+export const markSeen = async (conversationId : string) => {
+  const response = await api.patch(`/chat/seen/${conversationId}`);
+  return response.data;
+};
 
 export const getOrCreateConversations = async (receiverId: string) => {
   const response = await api.post(`/chat/conversation/${receiverId}`);
@@ -25,4 +29,10 @@ export const getMessages = async (conversationId: string) => {
 export const sendMessage = async(data : FormData) => {
   const response = await api.post(`/chat/message`, data);
   return response.data;
+}
+
+export const markConversationAsSeen = async (conversationId : string) =>{
+  const response = await api.patch(`/chat/conversations/${conversationId}/seen`)
+  return response.data;
+
 }

@@ -6,10 +6,11 @@ import Navbar from "../components/general/Navbar";
 import Sidebar from "../components/general/Sidebar";
 import ChatBar from "../components/general/ChatBar";
 import { useEffect, useState } from "react";
-import { Post } from "../types/post";
 import { getFeedPosts } from "../api/feed.api";
 import { toast } from "sonner";
 import FeedPost from "../components/FeedPageComponents/FeedPost";
+import { getSocket } from "../socket";
+import { FeedPostType } from "../types/feed";
 
 const FeedPage = () => {
   const { loading } = useSelector((state: RootState) => state.auth);
@@ -18,7 +19,7 @@ const FeedPage = () => {
     return <Spinner />;
   }
 
-  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [feedPosts, setFeedPosts] = useState<FeedPostType[]>([]);
   const [loadingPosts, setloadingPosts] = useState<boolean>(false);
 
   console.log("Feed Posts", feedPosts);
@@ -42,6 +43,27 @@ const FeedPage = () => {
     return <Spinner />;
   }
 
+  useEffect(() => {
+    const socket = getSocket();
+
+    if (!socket) return;
+
+    const handleNewPost = (newPost: FeedPostType) => {
+      setFeedPosts((prev) => {
+        if (prev.some((p) => p._id === newPost._id)) {
+          return prev;
+        }
+
+        return [newPost, ...prev];
+      });
+    };
+
+    socket.on("new_post", handleNewPost);
+
+    return () => {
+      socket.off("new_post", handleNewPost);
+    };
+  }, []);
   return (
     <div className="h-screen overflow-hidden flex flex-col">
       <Navbar />

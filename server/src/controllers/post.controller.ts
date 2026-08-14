@@ -7,6 +7,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import sanitizeHtml from "sanitize-html";
+import { io } from "../index.js";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
@@ -67,9 +68,27 @@ export const createPost = async (req: Request, res: Response) => {
       },
     });
 
+    const populatedPost = await Post.findById(post._id).populate("owner", "username profileImage").lean();
+
+    if(!populatedPost){
+      throw new ApiError(500, "Failed to populate post");
+    }
+
+    const formattedPost = {
+      ...populatedPost,
+      likes : [],
+      likeCount : 0,
+      commentsCount : 0,
+      comments : []
+    } 
+
+    io.emit("new_post", formattedPost)
+
+
+
     return res
       .status(201)
-      .json(new ApiResponse(201, post, "Post Uploaded Successfully"));
+      .json(new ApiResponse(201, formattedPost, "Post Uploaded Successfully"));
   } catch (err: any) {
     console.error(err);
 

@@ -130,6 +130,7 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
 
     try {
       const response = await updateProfileImage(formData);
+      // console.log(response.data)
       dispatch(setUser(response.data));
       setUserProfileInfo((prev) =>
         prev

@@ -19,7 +19,7 @@ export interface PostOwner {
 export interface Comment {
 }
 
-export interface Post {
+export interface UserProfilePost {
   _id: string;
   content: string;
   image: string;
@@ -31,4 +31,4 @@ export interface Post {
   likes : string[]
 }
 
-export type PostsResponse = Post[];
+export type PostsResponse = UserProfilePost[];

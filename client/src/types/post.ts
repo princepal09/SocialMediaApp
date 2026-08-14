@@ -12,12 +12,12 @@ export interface User {
   updatedAt: string;
 }
 
-export interface Post {
+export interface FullPost {
   _id: string;
   content: string;
-  image: string;
+  image?: string;
   owner: User;
-  comments: any[]; 
+  comments: any[];
   likes: string[];
   createdAt: string;
   updatedAt: string;
@@ -28,5 +28,5 @@ export interface Post {
 
 
 export interface FeedPostsResponse {
-  data: Post[];
+  data: FullPost[];
 }

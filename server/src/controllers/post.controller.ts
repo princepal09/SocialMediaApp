@@ -1,5 +1,4 @@
 import { Post } from "../models/post.model.js";
-import { Comment } from "../models/comment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Request, Response } from "express";
 import { uploadToCloudinary } from "../utils/cloudinary.js";

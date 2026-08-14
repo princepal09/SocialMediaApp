@@ -36,3 +36,4 @@ export const updateBio = async(updateBio:string) =>{
     const response = await api.patch("/users/update-bio", {updateBio});
     return response.data;
 }
+

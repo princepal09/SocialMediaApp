@@ -5,6 +5,7 @@ import { Post } from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import { io } from "../index.js";
 
 export const togglePostLike = async (req: Request, res: Response) => {
   try {
@@ -41,6 +42,15 @@ export const togglePostLike = async (req: Request, res: Response) => {
         $addToSet: {
           likes: userId,
         },
+      });
+    }
+
+    if (post.owner.toString() !== userId.toString()) {
+      io.to(post.owner.toString()).emit("postLiked", {
+        postId,
+        likedBy: userId,
+        message: `${req.user?.username} liked your post`,
+
       });
     }
 

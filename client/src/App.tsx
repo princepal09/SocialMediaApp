@@ -15,6 +15,7 @@ import EditPostPage from "./pages/EditPostPage";
 import ChatPage from "./pages/ChatPage";
 import { RootState } from "./store/store";
 import { connectSocket, disconnectSocket } from "./socket";
+import { toast } from "sonner";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -40,6 +41,14 @@ const App = () => {
     if(!user?._id) return;
     const socket = connectSocket(user?._id);
 
+    socket.on("postLiked", (data) => {
+      console.log("Notification received", data);
+      toast.info(`${data?.message}`)
+    })
+    socket.on("postComment", (data) => {
+      console.log("Notification received", data);
+      toast.info(`${data?.message}`)
+    })
     return () => {
       socket?.disconnect();
     };

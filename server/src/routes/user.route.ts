@@ -6,6 +6,7 @@ import {
   getCurrentUser,
   getUserFollowers,
   getUserProfileData,
+  searchUser,
   unfollowUser,
   updateBio,
   updateProfileImage,
@@ -29,5 +30,6 @@ router.patch(
   upload.single("profileImage"),
   updateProfileImage
 );
+router.get("/search", verifyUser, searchUser)
 
 export default router;

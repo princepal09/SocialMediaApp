@@ -5,6 +5,7 @@ import { Post } from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
+import { io } from "../index.js";
 
 export const createComment = async (req: Request, res: Response) => {
   const session = await mongoose.startSession();
@@ -54,10 +55,20 @@ export const createComment = async (req: Request, res: Response) => {
     // Populate the user
     await newComment.populate({
       path: "commentedBy",
-      select: "username profileImage ", 
+      select: "username profileImage ",
     });
 
     await session.commitTransaction();
+
+    if (post.owner.toString() !== userId.toString()) {
+      io.to(post.owner.toString()).emit("postComment", {
+        postId,
+        commentedBy : {
+          _id : userId,
+        },
+        message: `${req.user?.username} commented on your post`,
+      });
+    }
 
     return res
       .status(201)
@@ -91,10 +102,12 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
     }
     const comments = await Comment.find({
       post: postId,
-    }).populate({
-      path : "commentedBy",
-      select : "username profileImage"
-    }).exec()
+    })
+      .populate({
+        path: "commentedBy",
+        select: "username profileImage",
+      })
+      .exec();
 
     return res
       .status(200)

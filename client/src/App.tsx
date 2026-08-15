@@ -14,7 +14,7 @@ import UploadPostPage from "./pages/UploadPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import ChatPage from "./pages/ChatPage";
 import { RootState } from "./store/store";
-import { connectSocket, disconnectSocket } from "./socket";
+import { connectSocket } from "./socket";
 import { toast } from "sonner";
 
 const App = () => {

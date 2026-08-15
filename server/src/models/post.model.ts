@@ -10,6 +10,9 @@ const postSchema = new mongoose.Schema<IPost>(
     image: {
       type: String,
     },
+    video : {
+      type : String
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,

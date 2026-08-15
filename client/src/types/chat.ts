@@ -12,7 +12,7 @@ export type Conversastion = {
     image: string;
     sender: User;
   };
-  unreadCount : number
+  unreadCount: number;
 };
 
 export type Message = {
@@ -24,5 +24,5 @@ export type Message = {
     username: string;
     profileImage: string;
   };
-  createdAt : Date;
+  createdAt: Date;
 };

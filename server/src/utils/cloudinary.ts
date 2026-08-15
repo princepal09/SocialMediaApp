@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import { env } from "../constants.js";
+import { format } from "path";
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY.CLOUD_NAME,
@@ -18,6 +19,26 @@ export const uploadToCloudinary = async (localFilePath: string) => {
     fs.unlinkSync(localFilePath);
     return response;
   } catch (err) {
+    console.log("Cloudinary error", err);
+    fs.unlinkSync(localFilePath);
+  }
+};
+
+export const uploadVideoToCloudinary = async (localFilePath: string) => {
+  try {
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "video",
+      eager: [
+        {
+          streaming_profile: "full_hd",
+          format: "m3u8",
+        },
+      ],
+      eager_async: false,
+    });
+    fs.unlinkSync(localFilePath);
+    return response;
+  } catch (err: any) {
     console.log("Cloudinary error", err);
     fs.unlinkSync(localFilePath);
   }

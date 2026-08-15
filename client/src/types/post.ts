@@ -1,4 +1,3 @@
-
 export interface User {
   _id: string;
   username: string;
@@ -24,8 +23,6 @@ export interface FullPost {
   commentsCount: number;
   likesCount: number;
 }
-
-
 
 export interface FeedPostsResponse {
   data: FullPost[];

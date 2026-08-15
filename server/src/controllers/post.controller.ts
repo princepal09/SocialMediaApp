@@ -1,7 +1,11 @@
 import { Post } from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Request, Response } from "express";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  removeFromCloudinary,
+  uploadToCloudinary,
+  uploadVideoToCloudinary,
+} from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
@@ -11,44 +15,83 @@ import { redisClient } from "../config/redis.js";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
-    const postImagePath = req.file?.path;
+    const files =
+      (req.files as {
+        image?: Express.Multer.File[];
+        video?: Express.Multer.File[];
+      }) ?? {};
 
-    console.log("Body:", req.body);
-    console.log("File:", req.file);
+    const imageFiles = files.image ?? [];
+    const videoFiles = files.video ?? [];
+
+    const hasImage = imageFiles.length > 0;
+    const hasVideo = videoFiles.length > 0;
+
+    // Cannot upload both
+    if (hasImage && hasVideo) {
+      throw new ApiError(
+        400,
+        "You can upload either an image or a video, not both"
+      );
+    }
 
     const { content } = req.body;
     const userId = req.user?.id;
 
-    if (!content || typeof content !== "string") {
-      throw new ApiError(400, "Post content is required");
+    if (!userId) {
+      throw new ApiError(401, "Unauthorized");
     }
 
-    const sanitizedContent = sanitizeHtml(content, {
-      allowedTags: [
-        "p",
-        "br",
-        "strong",
-        "em",
-        "s",
-        "u",
-        "h1",
-        "h2",
-        "h3",
-        "ul",
-        "ol",
-        "li",
-        "blockquote",
-        "code",
-        "pre",
-      ],
-      allowedAttributes: {},
-    });
+    const hasContent = typeof content === "string" && content.trim().length > 0;
 
-    let imageUrl;
-
-    if (postImagePath) {
-      imageUrl = await uploadToCloudinary(postImagePath);
+    // At least one thing is required
+    if (!hasContent && !hasImage && !hasVideo) {
+      throw new ApiError(400, "Post must contain text, an image, or a video");
     }
+
+    let imageUrl: string | undefined;
+    let videoUrl: string | undefined;
+
+    // Upload image
+    if (hasImage && files.image?.[0]?.path) {
+      const imageResult = await uploadToCloudinary(files.image[0].path);
+
+      imageUrl = imageResult?.secure_url;
+    }
+
+    // Upload video
+    if (hasVideo && files.video?.[0]?.path) {
+      const videoResult = await uploadVideoToCloudinary(files.video[0].path);
+
+      if (!videoResult) {
+        throw new ApiError(500, "Failed to upload video to Cloudinary");
+      }
+
+      videoUrl = videoResult.eager?.[0]?.secure_url ?? videoResult.secure_url;
+    }
+
+    const sanitizedContent = hasContent
+      ? sanitizeHtml(content, {
+          allowedTags: [
+            "p",
+            "br",
+            "strong",
+            "em",
+            "s",
+            "u",
+            "h1",
+            "h2",
+            "h3",
+            "ul",
+            "ol",
+            "li",
+            "blockquote",
+            "code",
+            "pre",
+          ],
+          allowedAttributes: {},
+        })
+      : "";
 
     const user = await User.findById(userId);
 
@@ -58,7 +101,8 @@ export const createPost = async (req: Request, res: Response) => {
 
     const post = await Post.create({
       content: sanitizedContent,
-      image: imageUrl?.secure_url,
+      image: imageUrl,
+      video: videoUrl,
       owner: userId,
     });
 
@@ -91,7 +135,7 @@ export const createPost = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .json(new ApiResponse(201, formattedPost, "Post Uploaded Successfully"));
+      .json(new ApiResponse(201, formattedPost, "Post uploaded successfully"));
   } catch (err: any) {
     console.error(err);
 
@@ -373,6 +417,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
         $project: {
           content: 1,
           image: 1,
+          video: 1,
           createdAt: 1,
 
           commentCount: 1,
@@ -525,10 +570,11 @@ export const deletePost = async (req: Request, res: Response) => {
     const userId = req.user?._id;
 
     if (!postId) {
-      throw new ApiError(401, "Post Id not found");
+      throw new ApiError(400, "Post ID not found");
     }
 
-    const post = await Post.findOneAndDelete({
+    // Find the post first
+    const post = await Post.findOne({
       _id: postId,
       owner: userId,
     });
@@ -537,12 +583,27 @@ export const deletePost = async (req: Request, res: Response) => {
       throw new ApiError(404, "Post not found or unauthorized");
     }
 
+    // Delete image from Cloudinary
+    if (typeof post.image === "string" && post.image.length > 0) {
+      await removeFromCloudinary(post.image);
+    }
+
+    // Delete video from Cloudinary
+    if (typeof post.video === "string" && post.video.length > 0) {
+      await removeFromCloudinary(post.video);
+    }
+
+    // Delete post from MongoDB
+    await Post.findByIdAndDelete(post._id);
+
+    // Remove post from user's posts array
     await User.findByIdAndUpdate(userId, {
       $pull: {
         posts: post._id,
       },
     });
 
+    // Clear Redis cache
     await redisClient.del("home:posts");
     await redisClient.del(`user:posts:${req.user?.username}`);
 
@@ -550,6 +611,8 @@ export const deletePost = async (req: Request, res: Response) => {
       .status(200)
       .json(new ApiResponse(200, null, "Post deleted successfully"));
   } catch (err: any) {
+    console.error("Delete Post Error:", err);
+
     if (err instanceof ApiError) {
       return res.status(err.status).json({
         success: false,
@@ -563,7 +626,6 @@ export const deletePost = async (req: Request, res: Response) => {
     });
   }
 };
-
 export const getPostById = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;

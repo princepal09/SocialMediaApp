@@ -1,6 +1,5 @@
-export interface Follower{
-    _id : string,
-    username : string,
-    profileImage? : string
+export interface Follower {
+  _id: string;
+  username: string;
+  profileImage?: string;
 }
-

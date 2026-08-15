@@ -7,7 +7,7 @@ export interface IUserProfileInfo {
   followersCount: number;
   followingCount: number;
   bio?: string;
-  isFollowing : boolean
+  isFollowing: boolean;
 }
 
 export interface PostOwner {
@@ -16,19 +16,19 @@ export interface PostOwner {
   profileImage: string;
 }
 
-export interface Comment {
-}
+export interface Comment {}
 
 export interface UserProfilePost {
   _id: string;
   content: string;
-  image: string;
+  image?: string;
+  video?: string;
   owner: PostOwner;
-  createdAt: string; 
+  createdAt: string;
   commentCount: number;
-  likesCount : number
+  likesCount: number;
   comments: Comment[];
-  likes : string[]
+  likes: string[];
 }
 
 export type PostsResponse = UserProfilePost[];

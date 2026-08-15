@@ -22,6 +22,7 @@ export interface IUser extends Document {
 export interface IPost extends Document {
   content: string;
   image?: string;
+  video? : string
   owner: Types.ObjectId;
   comments: Types.ObjectId[];
   likes: Types.ObjectId[];

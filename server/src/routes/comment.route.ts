@@ -16,7 +16,12 @@ const commentLimiter = rateLimiter({
   perUser: true,
 });
 
-router.post("/create-comment/:postId", verifyUser, commentLimiter, createComment);
+router.post(
+  "/create-comment/:postId",
+  verifyUser,
+  commentLimiter,
+  createComment
+);
 router.get("/get-comments/:postId", verifyUser, getCommentsByPostId);
 router.delete(
   "/delete-comment/post/:postId/comment/:commentId",

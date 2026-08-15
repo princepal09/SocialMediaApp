@@ -14,7 +14,7 @@ const ChatBar = () => {
 
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
-  const loadConversations = async (showLoader = false) => {
+  const loadConversations = async () => {
     setLoading(true);
 
     try {
@@ -23,21 +23,14 @@ const ChatBar = () => {
     } catch (err: any) {
       toast.error(err?.message || "Failed to fetch conversations");
     } finally {
-      if (showLoader) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Show loader only when ChatBar first loads
-    loadConversations(true);
+    loadConversations();
 
     const socket = getSocket();
-
-    const handleConversationUpdated = () => {
-      loadConversations(false);
-    };
 
     socket?.on("conversation_updated", loadConversations);
 

@@ -28,9 +28,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       },
     });
 
-    let isNew : boolean = false;
-
-
+    let isNew: boolean = false;
 
     if (!conversation) {
       conversation = await Conversation.create({ participants });
@@ -46,15 +44,11 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
         );
     }
 
-
-    if(isNew){
-      participants.forEach((participantId : any) => {
+    if (isNew) {
+      participants.forEach((participantId: any) => {
         io.to(participantId.toString()).emit("conversation_created");
-      })
+      });
     }
-
-    
-    
 
     return res
       .status(200)
@@ -131,10 +125,9 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     io.to(conversationId.toString()).emit("new_message", populatedMessage);
 
-    conversation.participants.forEach((participantId : any) => {
+    conversation.participants.forEach((participantId: any) => {
       io.to(participantId.toString()).emit("conversation_updated");
-
-    })
+    });
 
     return res
       .status(201)
@@ -259,25 +252,28 @@ export const getUserConversation = async (req: Request, res: Response) => {
       })
       .sort({ updatedAt: -1 });
 
-      const conversationsWithUnread = await Promise.all(
-        conversations.map(async(conv) => {
-          const unreadCount = await Message.countDocuments({
-            conversation : conv._id,
-            seenBy : {$ne : userId},
-          });
+    const conversationsWithUnread = await Promise.all(
+      conversations.map(async (conv) => {
+        const unreadCount = await Message.countDocuments({
+          conversation: conv._id,
+          seenBy: { $ne: userId },
+        });
 
-          return {
-            ...conv.toObject(),
-            unreadCount
-          }
-
-        })
-      )
+        return {
+          ...conv.toObject(),
+          unreadCount,
+        };
+      })
+    );
 
     return res
       .status(200)
       .json(
-        new ApiResponse(200, conversationsWithUnread, "Conversation fetched Successfully")
+        new ApiResponse(
+          200,
+          conversationsWithUnread,
+          "Conversation fetched Successfully"
+        )
       );
   } catch (err: any) {
     console.error(err);

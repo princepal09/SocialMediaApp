@@ -12,7 +12,9 @@ const UploadPostContainer = () => {
   const [media, setMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState("");
 
-  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [mediaType, setMediaType] = useState<
+    "image" | "video" | null
+  >(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +24,7 @@ const UploadPostContainer = () => {
 
   // Create preview URL
   useEffect(() => {
-    if (!media) {
+    if (!media) { 
       setMediaPreview("");
       setMediaType(null);
       return;
@@ -43,7 +45,9 @@ const UploadPostContainer = () => {
     };
   }, [media]);
 
-  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -120,7 +124,9 @@ const UploadPostContainer = () => {
       navigate("/feed");
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || err?.message || "Failed to create post",
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to create post"
       );
     } finally {
       setLoading(false);
@@ -157,7 +163,10 @@ const UploadPostContainer = () => {
 
         {/* Editor */}
         <div className="p-4">
-          <PostEditor value={content} onChange={setContent} />
+          <PostEditor
+            value={content}
+            onChange={setContent}
+          />
         </div>
 
         {/* Media Preview */}

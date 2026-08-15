@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import { io } from "../index.js";
+import { invalidatePostCaches } from "../utils/cache.js";
 
 export const togglePostLike = async (req: Request, res: Response) => {
   try {
@@ -15,48 +16,58 @@ export const togglePostLike = async (req: Request, res: Response) => {
     if (!postId) {
       throw new ApiError(404, "Post Id not found");
     }
+
     if (!userId) {
       throw new ApiError(401, "User ID Not Found");
     }
 
-    const post = await Post.findById(postId);
+    // Populate owner so we can access username
+    const post = await Post.findById(postId).populate("owner", "username");
 
     if (!post) {
       throw new ApiError(404, "Post Not Found");
     }
 
-    console.log(post);
+    const isLiked = post.likes.some(
+      (like) => like.toString() === userId.toString()
+    );
 
-    const isLiked = post.likes.includes(userId);
+    let message = "";
+
     if (isLiked) {
       await Post.findByIdAndUpdate(postId, {
         $pull: {
           likes: userId,
         },
       });
-      return res
-        .status(201)
-        .json(new ApiResponse(201, null, "You unliked the post"));
+
+      message = "You unliked the post";
     } else {
       await Post.findByIdAndUpdate(postId, {
         $addToSet: {
           likes: userId,
         },
       });
+
+      message = "You liked the post";
     }
 
-    if (post.owner.toString() !== userId.toString()) {
-      io.to(post.owner.toString()).emit("postLiked", {
+    // Get post owner's username
+    const owner = post.owner as any;
+
+    // Invalidate caches AFTER updating the post
+    await invalidatePostCaches(owner.username);
+
+    // Send notification only when liking
+    if (!isLiked && post.owner._id.toString() !== userId.toString()) {
+      io.to(post.owner._id.toString()).emit("postLiked", {
         postId,
         likedBy: userId,
         message: `${req.user?.username} liked your post`,
-
       });
     }
 
-    return res
-      .status(201)
-      .json(new ApiResponse(201, null, "You Liked the post"));
+    return res.status(200).json(new ApiResponse(200, null, message));
   } catch (err: any) {
     console.error(err);
 

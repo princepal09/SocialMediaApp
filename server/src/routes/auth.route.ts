@@ -11,7 +11,7 @@ import { rateLimiter } from "../middlewares/rateLimiter.middleware.js";
 const router = express();
 
 const loginLimiter = rateLimiter({
-  windowMs: 1 * 60 * 1000,
+  windowMs: 3000,
   max: 2,
   prefix: "login",
 });

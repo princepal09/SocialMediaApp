@@ -12,6 +12,7 @@ import mongoose from "mongoose";
 import sanitizeHtml from "sanitize-html";
 import { io } from "../index.js";
 import { redisClient } from "../config/redis.js";
+import { invalidatePostCaches } from "../utils/cache.js";
 
 export const createPost = async (req: Request, res: Response) => {
   try {
@@ -491,12 +492,12 @@ export const updatePostContent = async (req: Request, res: Response) => {
     const { postId } = req.params;
     const { content } = req.body;
 
-    if (!content || content === "") {
+    if (!content || content.trim() === "") {
       throw new ApiError(400, "Content is required to update");
     }
 
     if (!userId) {
-      throw new ApiError(404, "User id not found");
+      throw new ApiError(401, "User id not found");
     }
 
     if (!postId) {
@@ -505,13 +506,12 @@ export const updatePostContent = async (req: Request, res: Response) => {
 
     const post = await Post.findById(postId);
 
-    console.log("POST to be updated", post);
     if (!post) {
       throw new ApiError(404, "Post Not Found");
     }
 
     if (!post.owner.equals(userId)) {
-      throw new ApiError(401, "You are Not authorized to perform this action");
+      throw new ApiError(403, "You are not authorized to perform this action");
     }
 
     const sanitizedContent = sanitizeHtml(content, {
@@ -536,10 +536,13 @@ export const updatePostContent = async (req: Request, res: Response) => {
     });
 
     post.content = sanitizedContent;
-    await post.save({ validateBeforeSave: false });
 
-    await redisClient.del("home:posts");
-    await redisClient.del(`user:posts:${req.user?.username}`);
+    await post.save({
+      validateBeforeSave: false,
+    });
+
+    // Invalidate caches
+    await invalidatePostCaches(req.user?.username);
 
     return res
       .status(200)
@@ -573,7 +576,11 @@ export const deletePost = async (req: Request, res: Response) => {
       throw new ApiError(400, "Post ID not found");
     }
 
-    // Find the post first
+    if (!userId) {
+      throw new ApiError(401, "User not authenticated");
+    }
+
+    // Find post and verify ownership
     const post = await Post.findOne({
       _id: postId,
       owner: userId,
@@ -596,16 +603,15 @@ export const deletePost = async (req: Request, res: Response) => {
     // Delete post from MongoDB
     await Post.findByIdAndDelete(post._id);
 
-    // Remove post from user's posts array
+    // Remove post reference from user
     await User.findByIdAndUpdate(userId, {
       $pull: {
         posts: post._id,
       },
     });
 
-    // Clear Redis cache
-    await redisClient.del("home:posts");
-    await redisClient.del(`user:posts:${req.user?.username}`);
+    // Invalidate caches AFTER successful database updates
+    await invalidatePostCaches(req.user?.username);
 
     return res
       .status(200)
@@ -626,6 +632,7 @@ export const deletePost = async (req: Request, res: Response) => {
     });
   }
 };
+
 export const getPostById = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;

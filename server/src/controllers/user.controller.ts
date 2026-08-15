@@ -12,6 +12,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import fs from "fs";
 import { abort } from "process";
+import { io } from "../index.js";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -614,6 +615,7 @@ export const followUser = async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
     const loggedInUserId = req.user?._id;
+
     if (!loggedInUserId) {
       throw new ApiError(401, "LoggedIn user not found");
     }
@@ -622,18 +624,20 @@ export const followUser = async (req: Request, res: Response) => {
     session.startTransaction();
 
     // Find the user to follow
-    const userToBeFollowed = await User.findOne({ username }).session(session);
+    const userToBeFollowed = await User.findOne({
+      username,
+    }).session(session);
 
     if (!userToBeFollowed) {
       throw new ApiError(404, "User not found");
     }
 
-    // Prevent Self follow
+    // Prevent self follow
     if (userToBeFollowed._id.equals(loggedInUserId)) {
       throw new ApiError(400, "You cannot follow yourself");
     }
 
-    // check if already following
+    // Check if already following
     const alreadyFollowing = await User.exists({
       _id: loggedInUserId,
       following: userToBeFollowed._id,
@@ -642,6 +646,7 @@ export const followUser = async (req: Request, res: Response) => {
     if (alreadyFollowing) {
       throw new ApiError(400, "You are already following this user");
     }
+
     // Add logged-in user to target user's followers
     await User.findByIdAndUpdate(
       userToBeFollowed._id,
@@ -654,7 +659,8 @@ export const followUser = async (req: Request, res: Response) => {
         session,
       }
     );
-    // Add logged-in user to target user's following
+
+    // Add target user to logged-in user's following
     await User.findByIdAndUpdate(
       loggedInUserId,
       {
@@ -662,10 +668,26 @@ export const followUser = async (req: Request, res: Response) => {
           following: userToBeFollowed._id,
         },
       },
-      { session }
+      {
+        session,
+      }
     );
 
+    // Commit transaction first
     await session.commitTransaction();
+
+    // 🔴 LIVE FOLLOW NOTIFICATION
+    if (userToBeFollowed._id.toString() !== loggedInUserId.toString()) {
+      io.to(userToBeFollowed._id.toString()).emit("userFollowed", {
+        followedBy: {
+          _id: loggedInUserId,
+          username: req.user?.username,
+          profileImage: req.user?.profileImage,
+        },
+
+        message: `${req.user?.username} started following you`,
+      });
+    }
 
     return res
       .status(200)
@@ -691,13 +713,13 @@ export const followUser = async (req: Request, res: Response) => {
         errors: err.errors,
       });
     }
+
     return res.status(500).json({
       status: 500,
       success: false,
       message: "Internal Server Error",
     });
   } finally {
-    // Always close the session
     if (session) {
       session.endSession();
     }

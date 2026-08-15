@@ -36,21 +36,44 @@ const App = () => {
     loadCurrentUser();
   }, [dispatch]);
 
+  //Live notification
   useEffect(() => {
+    if (!user?._id) return;
 
-    if(!user?._id) return;
-    const socket = connectSocket(user?._id);
+    const socket = connectSocket(user._id);
 
-    socket.on("postLiked", (data) => {
-      console.log("Notification received", data);
-      toast.info(`${data?.message}`)
-    })
-    socket.on("postComment", (data) => {
-      console.log("Notification received", data);
-      toast.info(`${data?.message}`)
-    })
+    const handlePostLiked = (data: any) => {
+      console.log("Like notification received", data);
+
+      toast.info(data?.message);
+    };
+
+    const handlePostComment = (data: any) => {
+      console.log("Comment notification received", data);
+
+      toast.info(data?.message);
+    };
+
+    const handleUserFollowed = (data: any) => {
+      console.log("Follow notification received", data);
+
+      toast.info(data?.message);
+    };
+
+    socket.on("postLiked", handlePostLiked);
+
+    socket.on("postComment", handlePostComment);
+
+    socket.on("userFollowed", handleUserFollowed);
+
     return () => {
-      socket?.disconnect();
+      socket.off("postLiked", handlePostLiked);
+
+      socket.off("postComment", handlePostComment);
+
+      socket.off("userFollowed", handleUserFollowed);
+
+      socket.disconnect();
     };
   }, [user?._id]);
 

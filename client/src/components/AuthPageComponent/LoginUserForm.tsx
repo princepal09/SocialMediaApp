@@ -35,12 +35,13 @@ const LoginUserForm = () => {
       toast.success(response?.message);
       reset();
       navigate("/feed");
+      reset();
     } catch (err: any) {
       console.log(err);
       toast.error(err?.message ?? "Something went wrong");
     } finally {
       toast.dismiss(toastId);
-      reset();
+      
     }
   };
 

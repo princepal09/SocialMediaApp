@@ -9,7 +9,10 @@ import chatRoutes from "../src/routes/chat.route.js";
 import userRoutes from "../src/routes/user.route.js";
 import { env } from "./constants.js";
 import postRoutes from "../src/routes/post.route.js";
+import { rateLimiter } from "./middlewares/rateLimiter.middleware.js";
 export const app = express() as Express;
+
+app.set("trust proxy", 1); // Required behind proxy
 
 app.use(
   cors({
@@ -19,6 +22,14 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(   // Gloval Rate Limitter
+  rateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 500,
+    prefix: "global",
+  })
+);
 
 app.use("/api/v1/test", testRoutes);
 app.use("/api/v1/auth", authRoutes);

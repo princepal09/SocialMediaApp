@@ -13,6 +13,7 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
+
 const router = express();
 
 //user
@@ -30,6 +31,6 @@ router.patch(
   upload.single("profileImage"),
   updateProfileImage
 );
-router.get("/search", verifyUser, searchUser)
+router.get("/search", verifyUser, searchUser);
 
 export default router;

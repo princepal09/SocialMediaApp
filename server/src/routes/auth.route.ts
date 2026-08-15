@@ -7,11 +7,24 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
+import { rateLimiter } from "../middlewares/rateLimiter.middleware.js";
 const router = express();
 
+const loginLimiter = rateLimiter({
+  windowMs: 1 * 60 * 1000,
+  max: 2,
+  prefix: "login",
+});
+
+const refreshLimiter = rateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  prefix: "refresh",
+});
+
 router.post("/register", upload.single("profileImage"), registerUser);
-router.post("/login", loginUser);
-router.post("/refresh-token", refreshAccessToken);
+router.post("/login", loginLimiter, loginUser);
+router.post("/refresh-token", refreshLimiter, refreshAccessToken);
 
 //secured routes
 router.post("/logout", verifyUser, logoutUser);

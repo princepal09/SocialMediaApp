@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IConversation } from "../../types/model.js";
+import { IConversation } from "../types/model.js";
 
 const conversationSchema = new mongoose.Schema<IConversation>(
   {
@@ -19,14 +19,11 @@ const conversationSchema = new mongoose.Schema<IConversation>(
   { timestamps: true }
 );
 
-
-
-conversationSchema.pre("save", function(){
-    this.participants.sort((a:any, b:any) => {
-     return a.toString().localeCompare(b.toString())
-    })
-})
-
+conversationSchema.pre("save", function () {
+  this.participants.sort((a: any, b: any) => {
+    return a.toString().localeCompare(b.toString());
+  });
+});
 
 export const Conversation = mongoose.model<IConversation>(
   "Conversation",

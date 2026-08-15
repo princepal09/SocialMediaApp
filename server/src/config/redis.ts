@@ -2,7 +2,7 @@ import { createClient } from "redis";
 import { env } from "../constants.js";
 
 export const redisClient = createClient({
-  url: env.REDIS_URL as string,
+  url: env.REDIS_URL,
 });
 
 redisClient.on("error", (err) => {

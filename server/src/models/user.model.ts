@@ -1,7 +1,7 @@
 import mongoose, { mongo, Mongoose } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { IUser } from "../../types/model.js";
+import { IUser } from "../types/model.js";
 import { env } from "../constants.js";
 import type { StringValue } from "ms";
 
@@ -73,7 +73,7 @@ userSchema.pre("save", async function () {
 });
 
 userSchema.methods.isPasswordCorrect = async function (password: string) {
-  console.log(password, this.password)
+  console.log(password, this.password);
   return await bcrypt.compare(password, this.password);
 };
 

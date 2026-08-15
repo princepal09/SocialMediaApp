@@ -273,7 +273,7 @@ export const getUserPosts = async (req: Request, res: Response) => {
       throw new ApiError(401, "User Not Found");
     }
 
-    const cacheKey = `user/posts:${username}`;
+    const cacheKey = `user:posts:${username}`;
     const cachedData = await redisClient.get(cacheKey);
 
     if (cachedData) {
@@ -469,7 +469,28 @@ export const updatePostContent = async (req: Request, res: Response) => {
       throw new ApiError(401, "You are Not authorized to perform this action");
     }
 
-    post.content = content;
+    const sanitizedContent = sanitizeHtml(content, {
+      allowedTags: [
+        "p",
+        "br",
+        "strong",
+        "em",
+        "s",
+        "u",
+        "h1",
+        "h2",
+        "h3",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "code",
+        "pre",
+      ],
+      allowedAttributes: {},
+    });
+
+    post.content = sanitizedContent;
     await post.save({ validateBeforeSave: false });
 
     await redisClient.del("home:posts");
@@ -522,6 +543,9 @@ export const deletePost = async (req: Request, res: Response) => {
       },
     });
 
+    await redisClient.del("home:posts");
+    await redisClient.del(`user:posts:${req.user?.username}`);
+
     return res
       .status(200)
       .json(new ApiResponse(200, null, "Post deleted successfully"));
@@ -532,9 +556,6 @@ export const deletePost = async (req: Request, res: Response) => {
         message: err.message,
       });
     }
-
-    await redisClient.del("home:posts");
-    await redisClient.del(`user:posts:${req.user?.username}`);
 
     return res.status(500).json({
       success: false,
@@ -581,4 +602,4 @@ export const getPostById = async (req: Request, res: Response) => {
       message: "Internal Server Error",
     });
   }
-};  
+};

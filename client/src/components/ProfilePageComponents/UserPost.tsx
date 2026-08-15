@@ -7,7 +7,7 @@ import {
   Trash2,
   User2,
 } from "lucide-react";
-import { Post } from "../../types/userProfile";
+import { UserProfilePost } from "../../types/userProfile";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
@@ -23,9 +23,10 @@ import Spinner from "../general/Spinner";
 import { Link } from "react-router-dom";
 import { deletePost } from "../../api/post.api";
 import ConfirmationModal from "../general/ConfirmationModal";
+import HlsVideoPlayer from "../general/HlsVideoPlayer";
 
 interface UserPostProps {
-  post: Post;
+  post: UserProfilePost;
   onDeletePost: (postId: string) => void;
 }
 
@@ -42,9 +43,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
   const [deleting, setDeleting] = useState(false);
 
   const [createCommentLoading, setCreateCommentLoading] = useState(false);
-  const [commentsCount, setCommentsCount] = useState<number>(
-    post.commentCount
-  );
+  const [commentsCount, setCommentsCount] = useState<number>(post.commentCount);
 
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -125,10 +124,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
     setCreateCommentLoading(true);
 
     try {
-      const newComment = await createComment(
-        post._id,
-        commentText
-      );
+      const newComment = await createComment(post._id, commentText);
 
       setComments((prev) => [newComment.data, ...prev]);
       setCommentsCount((prev) => prev + 1);
@@ -149,16 +145,14 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
       await deleteComment(post._id, commentId);
 
       setComments((prev) =>
-        prev.filter((comment) => comment._id !== commentId)
+        prev.filter((comment) => comment._id !== commentId),
       );
 
       setCommentsCount((prev) => Math.max(0, prev - 1));
 
       toast.success("Comment deleted successfully");
     } catch (err: any) {
-      toast.error(
-        err?.message || "Failed to delete the comment"
-      );
+      toast.error(err?.message || "Failed to delete the comment");
     } finally {
       setDeleteLoading(false);
     }
@@ -168,9 +162,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
     if (contentRef.current) {
       const element = contentRef.current;
 
-      setIsOverflowing(
-        element.scrollHeight > element.clientHeight
-      );
+      setIsOverflowing(element.scrollHeight > element.clientHeight);
     }
   }, [post.content]);
 
@@ -185,13 +177,11 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
 
       onDeletePost(post._id);
 
-      toast.success(
-        response.message || "Post deleted successfully",);
+      toast.success(response.message || "Post deleted successfully");
 
       setShowConfirm(false);
     } catch (err: any) {
-      toast.error(
-        err?.message || "Failed to delete post",);
+      toast.error(err?.message || "Failed to delete post");
     } finally {
       setDeleting(false);
     }
@@ -203,16 +193,12 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
         <div className="px-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-white">
-                @{post.owner.username}
-              </p>
+              <p className="font-semibold text-white">@{post.owner.username}</p>
 
               <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
                 <CalendarDays size={13} />
 
-                {new Date(
-                  post.createdAt
-                ).toLocaleDateString()}
+                {new Date(post.createdAt).toLocaleDateString()}
               </div>
             </div>
 
@@ -220,7 +206,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
               <div className="flex items-center justify-center gap-5">
                 <Link
                   className="text-[#9929EA] transition hover:text-[#5f1792]"
-                  to={`/profile/${user.username}/post/edit/${post._id}`}
+                  to={`/profile/${user?.username}/post/edit/${post._id}`}
                 >
                   <Pencil size={18} />
                 </Link>
@@ -241,9 +227,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
           <div
             ref={contentRef}
             className={`prose prose-invert max-w-none text-white transition-all duration-300 ${
-              expanded
-                ? ""
-                : "line-clamp-3 overflow-hidden"
+              expanded ? "" : "line-clamp-3 overflow-hidden"
             }`}
             dangerouslySetInnerHTML={{
               __html: post.content,
@@ -253,9 +237,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
           {isOverflowing && (
             <button
               type="button"
-              onClick={() =>
-                setExpanded((prev) => !prev)
-              }
+              onClick={() => setExpanded((prev) => !prev)}
               className="mt-1 text-sm text-blue-400 hover:underline"
             >
               {expanded ? "Read less" : "Read more"}
@@ -263,13 +245,25 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
           )}
         </div>
 
-        {post.image && (
+        {/* Post Media */}
+        {(post.image || post.video) && (
           <div className="mt-3 px-4">
-            <img
-              src={post.image}
-              alt="Post"
-              className="h-72 w-full rounded-xl object-cover"
-            />
+            {/* Image */}
+            {post.image && (
+              <img
+                src={post.image}
+                alt="Post"
+                className="max-h-[500px] w-full rounded-xl object-cover"
+              />
+            )}
+
+            {/* Video */}
+            {post.video && (
+              <HlsVideoPlayer
+                src={post.video}
+                className="max-h-[500px] w-full rounded-xl bg-black object-contain"
+              />
+            )}
           </div>
         )}
 
@@ -283,11 +277,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
             >
               <Heart
                 size={20}
-                className={
-                  isLikedByMe
-                    ? "fill-pink-500 text-pink-500"
-                    : ""
-                }
+                className={isLikedByMe ? "fill-pink-500 text-pink-500" : ""}
               />
             </button>
 
@@ -309,19 +299,14 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
             {loadingComments ? (
               <Spinner fullScreen={false} />
             ) : comments.length === 0 ? (
-              <p className="text-sm text-zinc-400">
-                No comments yet.
-              </p>
+              <p className="text-sm text-zinc-400">No comments yet.</p>
             ) : (
               comments.map((comment) => {
-                const isPostOwner =
-                  user?._id === post.owner._id;
+                const isPostOwner = user?._id === post.owner._id;
 
-                const isCommentOwner =
-                  user?._id === comment.commentedBy._id;
+                const isCommentOwner = user?._id === comment.commentedBy._id;
 
-                const canDelete =
-                  isPostOwner || isCommentOwner;
+                const canDelete = isPostOwner || isCommentOwner;
 
                 return (
                   <div
@@ -354,9 +339,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
                       <button
                         type="button"
                         disabled={deleteLoading}
-                        onClick={() =>
-                          handleDeleteComment(comment._id)
-                        }
+                        onClick={() => handleDeleteComment(comment._id)}
                         className="text-red-400 transition hover:text-red-500"
                       >
                         <Trash2 size={16} />
@@ -370,9 +353,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
             <div className="flex gap-2 pt-2">
               <input
                 value={commentText}
-                onChange={(e) =>
-                  setCommentText(e.target.value)
-                }
+                onChange={(e) => setCommentText(e.target.value)}
                 placeholder="Write a comment..."
                 className="flex-1 rounded-md bg-zinc-800 px-3 py-2 text-white outline-none"
               />
@@ -383,9 +364,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
                 onClick={handleAddComment}
                 className="rounded-md bg-blue-600 px-4 text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {createCommentLoading
-                  ? "Posting..."
-                  : "Post"}
+                {createCommentLoading ? "Posting..." : "Post"}
               </button>
             </div>
           </div>

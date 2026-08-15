@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { Post } from "../../types/post";
+import { FeedPostType } from "../../types/feed";
 import { RootState } from "../../store/store";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -13,9 +13,10 @@ import {
   getCommentByPostId,
 } from "../../api/comment.api";
 import Spinner from "../general/Spinner";
+import HlsVideoPlayer from "../general/HlsVideoPlayer";
 
 interface FeedPostProps {
-  post: Post;
+  post: FeedPostType;
 }
 
 const FeedPost = ({ post }: FeedPostProps) => {
@@ -174,12 +175,26 @@ const FeedPost = ({ post }: FeedPostProps) => {
           </span>
         </div>
 
-        {post.image && (
-          <img
-            src={post.image}
-            alt="Post"
-            className="mt-3 w-full rounded-xl object-cover"
-          />
+        {/* Post Media */}
+        {(post.image || post.video) && (
+          <div className="mt-3 px-4">
+            {/* Image */}
+            {post.image && (
+              <img
+                src={post.image}
+                alt="Post"
+                className="max-h-[500px] w-full rounded-xl object-cover"
+              />
+            )}
+
+            {/* Video */}
+            {post.video && (
+              <HlsVideoPlayer
+                src={post.video}
+                className="max-h-[500px] w-full rounded-xl bg-black object-contain"
+              />
+            )}
+          </div>
         )}
         {/* Post content with read more */}
         <div className="relative">

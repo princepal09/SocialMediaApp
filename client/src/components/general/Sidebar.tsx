@@ -91,14 +91,14 @@ const Sidebar = () => {
           className="
     group flex w-full items-center gap-2 rounded-xl
     px-4 py-3 text-sm font-medium text-red-400
-    transition-all duration-200
+    transition-all duration-200 md:bg-red-500 md:text-white 
     hover:bg-white/5 hover:text-red-300
     active:scale-[0.98]
   "
         >
           <LogOut
             size={18}
-            className="transition-transform group-hover:-translate-x-1"
+            className="transition-transform  group-hover:-translate-x-1"
           />
           Logout
         </button>

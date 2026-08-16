@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError.js";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { User } from "../models/user.model.js";
+import { env } from "../constants.js";
 
 export interface MyJwtPayload extends JwtPayload {
   _id: string;
@@ -13,47 +14,57 @@ export const verifyUser = async (
   next: NextFunction
 ) => {
   try {
-    const token =
-      req.cookies?.accessToken || req.header("Authorization")?.split(" ")[1];
-    if (!token) {
-      throw new ApiError(401, "Unauthorized Access");
-    }
+    console.log("========== AUTH DEBUG ==========");
+    console.log("NODE_ENV:", env.NODE_ENV);
+    console.log("Cookies:", req.cookies);
+    console.log("Access Token:", req.cookies?.accessToken);
+    console.log(
+      "Authorization:",
+      req.header("Authorization")
+    );
+    console.log("================================");
 
-    console.log("accessToken", token);
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({
+        status: 401,
+        success: false,
+        message: "Unauthorized Access - No token received",
+      });
+    }
 
     const decoded = jwt.verify(
       token,
-      process.env.ACCESS_TOKEN_SECRET!
+      env.ACCESS_TOKEN_SECRET!
     ) as MyJwtPayload;
+
+    console.log("Decoded token:", decoded);
 
     const user = await User.findById(decoded._id).select(
       "-password -refreshToken"
     );
 
-    if(!user){
-        throw new ApiError(401, "Invalid access token");
-    }
-    console.log(user);
-    req.user = user;
-
-    return next();
-
-  } catch (err: any) {
-    console.error(err);
-
-    if (err instanceof ApiError) {
-      return res.status(err.status).json({
-        status: err.status,
+    if (!user) {
+      return res.status(401).json({
+        status: 401,
         success: false,
-        message: err.message,
-        errors: err.errors,
+        message: "Invalid access token - User not found",
       });
     }
 
-    return res.status(500).json({
-      status: 500,
+    req.user = user;
+
+    return next();
+  } catch (error: any) {
+    console.error("AUTH ERROR:", error);
+
+    return res.status(401).json({
+      status: 401,
       success: false,
-      message: "Internal Server Error",
+      message: error?.message || "Invalid or expired token",
     });
   }
 };

@@ -82,9 +82,9 @@ export const registerUser = async (req: Request, res: Response) => {
     createdUser.refreshToken = refreshToken;
     await createdUser.save({ validateBeforeSave: false });
 
-     const isProduction = env.NODE_ENV === "production";
+    const isProduction = env.NODE_ENV === "production";
 
-    const cookieOptions:CookieOptions = {
+    const cookieOptions: CookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
@@ -216,15 +216,18 @@ export const logoutUser = async (req: Request, res: Response) => {
       { new: true }
     );
 
-    const cookieOption = {
+    const isProduction = env.NODE_ENV === "production";
+
+    const cookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     };
 
     return res
       .status(200)
-      .clearCookie("accessToken", cookieOption)
-      .clearCookie("refreshToken", cookieOption)
+      .clearCookie("accessToken", cookieOptions)
+      .clearCookie("refreshToken", cookieOptions)
       .json(new ApiResponse(200, null, "User Logged Out Successfully"));
   } catch (err: any) {
     console.error(err);

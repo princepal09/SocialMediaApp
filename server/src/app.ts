@@ -16,7 +16,7 @@ app.set("trust proxy", 1); // Required behind proxy
 
 app.use(
   cors({
-    origin: [env.CORS_ORIGIN],
+    origin: env.CORS_ORIGIN,
     credentials: true,
   })
 );

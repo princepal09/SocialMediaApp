@@ -7,8 +7,6 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
 
-    "types": ["node"],
-
     "strict": true,
 
     "sourceMap": true,
@@ -25,5 +23,6 @@
     "verbatimModuleSyntax": false,
     "moduleDetection": "force"
   },
-  "include": ["src", "src/types"]
+  "include": ["src/**/*", "src/types/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,11 +1,11 @@
 import { app } from "./app.js";
-import dotenv from "dotenv";
 import dbConnect from "./config/db.js";
-const PORT = env.PORT;
 import http from "http";
 import { Server } from "socket.io";
 import { env } from "./constants.js";
 import { connectRedis } from "./config/redis.js";
+
+const PORT = env.PORT;
 
 const server = http.createServer(app);
 

@@ -6,7 +6,7 @@ import { NavLink } from "react-router-dom";
 import { Conversastion } from "../../types/chat";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { getSocket } from "../../socket";
+import { connectSocket, getSocket } from "../../socket";
 
 interface ChatBarProps {
   onConversationClick?: () => void;
@@ -35,14 +35,21 @@ const ChatBar = ({ onConversationClick }: ChatBarProps) => {
   useEffect(() => {
     loadConversations();
 
-    const socket = getSocket();
+    if (!loggedInUser?._id) return;
 
-    socket?.on("conversation_updated", loadConversations);
+    const socket = getSocket() || connectSocket(loggedInUser._id);
+
+    const handleConversationUpdate = () => {
+      console.log("🔄 Conversation updated");
+      loadConversations();
+    };
+
+    socket.on("conversation_updated", handleConversationUpdate);
 
     return () => {
-      socket?.off("conversation_updated", loadConversations);
+      socket.off("conversation_updated", handleConversationUpdate);
     };
-  }, [loadConversations]);
+  }, [loadConversations, loggedInUser?._id]);
 
   return (
     <aside className="flex h-full w-full flex-col border-l border-white/10 bg-black text-white xl:w-72">

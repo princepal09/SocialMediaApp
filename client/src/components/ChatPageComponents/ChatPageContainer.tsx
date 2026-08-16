@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Message } from "../../types/chat";
 import { toast } from "sonner";
-import { getSocket } from "../../socket";
+import { connectSocket, getSocket } from "../../socket";
 
 import {
   getMessages,
@@ -21,9 +21,14 @@ interface ReceiverState {
 }
 
 const ChatPageContainer = () => {
-  const { receiverId, username } = useParams<{
+  const {
+    receiverId,
+    username,
+    conversationId: routeConversationId,
+  } = useParams<{
     receiverId: string;
     username: string;
+    conversationId: string;
   }>();
 
   const location = useLocation();
@@ -33,7 +38,9 @@ const ChatPageContainer = () => {
   const receiverName = receiver?.username || username || "User";
   const receiverProfileImage = receiver?.profileImage;
 
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(
+    routeConversationId || null,
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -70,30 +77,72 @@ const ChatPageContainer = () => {
     }
   };
 
-  useEffect(() => {
-    if (!conversationId) return;
-    const socket = getSocket();
-    if (!socket) return;
+useEffect(() => {
+  if (!conversationId || !currentUser?._id) return;
+
+  // Get existing socket or create/reconnect it
+  const socket =
+    getSocket() || connectSocket(currentUser._id);
+
+  const joinConversation = () => {
+    console.log(
+      "🟢 JOINING CONVERSATION:",
+      conversationId
+    );
+
     socket.emit("join_conversation", conversationId);
+  };
 
-    const handleNewMessage = async (msg: Message) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
+  const handleNewMessage = async (data: {
+  conversationId: string;
+  message: Message;
+}) => {
+  console.log("🔥 MESSAGE RECEIVED:", data);
 
-      if (msg.sender._id !== currentUser?._id) {
-        await markSeen(conversationId);
-      }
-    };
+  // Ignore messages belonging to another conversation
+  if (data.conversationId !== conversationId) {
+    return;
+  }
 
-    socket.on("new_message", handleNewMessage);
+  const newMessage = data.message;
 
-    return () => {
-      socket.off("new_message", handleNewMessage);
+  setMessages((prev) => {
+    const exists = prev.some(
+      (message) => message._id === newMessage._id
+    );
+
+    if (exists) {
+      return prev;
+    }
+
+    return [...prev, newMessage];
+  });
+
+  if (newMessage.sender?._id !== currentUser?._id) {
+    await markSeen(conversationId);
+  }
+};
+
+  // Register listener
+  socket.on("new_message", handleNewMessage);
+
+  // If already connected, join immediately
+  if (socket.connected) {
+    joinConversation();
+  }
+
+  // If socket connects/reconnects later
+  socket.on("connect", joinConversation);
+
+  return () => {
+    socket.off("new_message", handleNewMessage);
+    socket.off("connect", joinConversation);
+
+    if (socket.connected) {
       socket.emit("leave_conversation", conversationId);
-    };
-  }, [conversationId]);
+    }
+  };
+}, [conversationId, currentUser?._id]);
 
   useEffect(() => {
     initChat();
@@ -169,7 +218,25 @@ const ChatPageContainer = () => {
         formData.append("image", image);
       }
 
-      await sendMessage(formData);
+      const response = await sendMessage(formData);
+
+      console.log("Message response:", response);
+
+      const newMessage = response?.data;
+
+      if (newMessage) {
+        setMessages((prev) => {
+          if (
+            prev.some(
+              (existingMessage) => existingMessage._id === newMessage._id,
+            )
+          ) {
+            return prev;
+          }
+
+          return [...prev, newMessage];
+        });
+      }
 
       setText("");
 
@@ -177,7 +244,13 @@ const ChatPageContainer = () => {
 
       inputRef.current?.focus();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to send message");
+      console.error("Send message error:", err);
+
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to send message",
+      );
     } finally {
       setSending(false);
     }

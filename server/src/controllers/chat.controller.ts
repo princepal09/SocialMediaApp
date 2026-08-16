@@ -5,7 +5,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { io } from "../index.js";
-import { BooleanSchemaDefinition } from "mongoose";
 
 export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
@@ -15,6 +14,7 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
     if (!userId || !receiverId) {
       throw new ApiError(404, "Invalid Users");
     }
+
     if (userId.toString() === receiverId.toString()) {
       throw new ApiError(400, "Cannot chat with yourself");
     }
@@ -28,31 +28,39 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
       },
     });
 
-    let isNew: boolean = false;
+    let isNew = false;
 
     if (!conversation) {
-      conversation = await Conversation.create({ participants });
+      conversation = await Conversation.create({
+        participants,
+      });
+
       isNew = true;
-      return res
-        .status(201)
-        .json(
-          new ApiResponse(
-            201,
-            conversation,
-            "Conversastion Created Successfully"
-          )
-        );
     }
 
     if (isNew) {
       participants.forEach((participantId: any) => {
-        io.to(participantId.toString()).emit("conversation_created");
+        const userRoom = participantId.toString();
+
+        io.to(userRoom).emit("conversation_created", {
+          conversationId: conversation!._id,
+        });
+
+        io.to(userRoom).emit("conversation_updated");
       });
     }
 
     return res
-      .status(200)
-      .json(new ApiResponse(200, conversation, "Conversastion fetched"));
+      .status(isNew ? 201 : 200)
+      .json(
+        new ApiResponse(
+          isNew ? 201 : 200,
+          conversation,
+          isNew
+            ? "Conversation Created Successfully"
+            : "Conversation Fetched Successfully"
+        )
+      );
   } catch (err: any) {
     console.error(err);
 
@@ -123,10 +131,19 @@ export const sendMessage = async (req: Request, res: Response) => {
       "username profileImage"
     );
 
-    io.to(conversationId.toString()).emit("new_message", populatedMessage);
+    const socketPayload = {
+      conversationId: conversationId.toString(),
+      message: populatedMessage,
+    };
 
     conversation.participants.forEach((participantId: any) => {
-      io.to(participantId.toString()).emit("conversation_updated");
+      const userRoom = participantId.toString();
+
+      console.log("📤 Emitting new_message to user room:", userRoom);
+
+      io.to(userRoom).emit("new_message", socketPayload);
+
+      io.to(userRoom).emit("conversation_updated");
     });
 
     return res

@@ -11,7 +11,7 @@ import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import fs from "fs";
-import { abort } from "process";
+import type { CookieOptions } from "express";
 import { io } from "../index.js";
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -82,9 +82,12 @@ export const registerUser = async (req: Request, res: Response) => {
     createdUser.refreshToken = refreshToken;
     await createdUser.save({ validateBeforeSave: false });
 
-    const cookieOptions = {
+     const isProduction = env.NODE_ENV === "production";
+
+    const cookieOptions:CookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     };
 
     return res
@@ -153,14 +156,17 @@ export const loginUser = async (req: Request, res: Response) => {
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-    };
-
     const loggedInUser = await User.findById(user._id).select(
       "-password -refreshToken"
     );
+
+    const isProduction = env.NODE_ENV === "production";
+
+    const cookieOptions: CookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+    };
 
     return res
       .cookie("accessToken", accessToken, cookieOptions)
@@ -270,9 +276,12 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     user.refreshToken = newRefreshToken;
     await user.save({ validateBeforeSave: false });
 
-    const cookieOptions = {
+    const isProduction = env.NODE_ENV === "production";
+
+    const cookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     };
     return res
       .status(201)

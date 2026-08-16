@@ -18,7 +18,8 @@ export const env = {
   },
 
   CORS_ORIGIN: process.env.CORS_ORIGIN,
-  REDIS_URL:process.env.REDIS_URL
+  REDIS_URL:process.env.REDIS_URL,
+  NODE_ENV:process.env.NODE_ENV
 };
 
 export const DB_NAME = "socialmedia"

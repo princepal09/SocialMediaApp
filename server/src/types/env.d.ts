@@ -16,5 +16,6 @@ declare namespace NodeJS {
 
     CORS_ORIGIN: string;
     REDIS_URL:string;
+    NODE_ENV:string;
   }
 }

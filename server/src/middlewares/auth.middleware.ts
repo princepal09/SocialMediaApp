@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError.js";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { env } from "process";
 import { User } from "../models/user.model.js";
 
 export interface MyJwtPayload extends JwtPayload {

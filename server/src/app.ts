@@ -23,7 +23,8 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(   // Gloval Rate Limitter
+app.use(
+  // Gloval Rate Limitter
   rateLimiter({
     windowMs: 15 * 60 * 1000,
     max: 500,

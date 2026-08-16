@@ -1,15 +1,15 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
-import testRoutes from "../src/routes/test.route.js";
-import authRoutes from "../src/routes/auth.route.js";
-import commentRoutes from "../src/routes/comment.route.js";
-import likeRoutes from "../src/routes/like.route.js";
-import chatRoutes from "../src/routes/chat.route.js";
-import userRoutes from "../src/routes/user.route.js";
+import testRoutes from "./routes/test.route.js";
+import authRoutes from "./routes/auth.route.js";
+import commentRoutes from "./routes/comment.route.js";
+import likeRoutes from "./routes/like.route.js";
+import chatRoutes from "./routes/chat.route.js";
+import userRoutes from "./routes/user.route.js";
+import postRoutes from "./routes/post.route.js";
 import { env } from "./constants.js";
-import postRoutes from "../src/routes/post.route.js";
 import { rateLimiter } from "./middlewares/rateLimiter.middleware.js";
+import cookieParser from "cookie-parser";
 export const app = express() as Express;
 
 app.set("trust proxy", 1); // Required behind proxy

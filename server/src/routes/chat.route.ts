@@ -8,7 +8,7 @@ import {
   sendMessage,
 } from "../controllers/chat.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-const router = express();
+const router = express.Router();
 
 router.post("/conversation/:receiverId", verifyUser, getOrCreateConversation);
 router.post("/message", verifyUser, upload.single("image"), sendMessage);

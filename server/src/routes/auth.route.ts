@@ -8,7 +8,7 @@ import {
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import { rateLimiter } from "../middlewares/rateLimiter.middleware.js";
-const router = express();
+const router = express.Router();
 
 const loginLimiter = rateLimiter({
   windowMs: 3000,

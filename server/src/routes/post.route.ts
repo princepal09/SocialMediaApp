@@ -9,8 +9,7 @@ import {
 } from "../controllers/post.controller.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
-
-const router = express();
+const router = express.Router();
 
 router.post(
   "/create-post",

@@ -14,7 +14,7 @@ import {
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 
-const router = express();
+const router = express.Router();
 
 //user
 router.get("/current-user", verifyUser, getCurrentUser);

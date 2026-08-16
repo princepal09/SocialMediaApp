@@ -6,7 +6,7 @@ import {
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import { rateLimiter } from "../middlewares/rateLimiter.middleware.js";
 
-const router = express();
+const router = express.Router();
 
 const likeLimiter = rateLimiter({
   windowMs: 60 * 1000,

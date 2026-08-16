@@ -1,5 +1,4 @@
-import { LoaderCircle, Search, User2, X } from "lucide-react";
-import { SearchUser } from "../../types/searchUser";
+import { LoaderCircle, Search, X } from "lucide-react";
 
 interface SearchInputProps {
   query: string;

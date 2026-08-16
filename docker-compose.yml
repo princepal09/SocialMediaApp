@@ -1,0 +1,61 @@
+services:
+  # ================= MONGODB =================
+  mongo:
+    image: mongo:7
+    container_name: socialmedia_mongo
+    restart: unless-stopped
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongo_data:/data/db
+
+
+  # ================= REDIS =================
+  redis:
+    image: redis:7
+    container_name: socialmedia_redis
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+
+  # ================= BACKEND =================
+  backend:
+    build:
+      context: ./server
+
+    container_name: socialmedia_backend
+    restart: unless-stopped
+
+    env_file:
+      - ./server/.env
+
+    ports:
+      - "6001:6001"
+
+    depends_on:
+      - mongo
+      - redis
+
+
+  # ================= FRONTEND =================
+  frontend:
+    build:
+      context: ./client
+
+    container_name: socialmedia_frontend
+    restart: unless-stopped
+
+    ports:
+      - "3001:3001"
+
+    depends_on:
+      - backend
+
+
+# ================= VOLUMES =================
+volumes:
+  mongo_data:

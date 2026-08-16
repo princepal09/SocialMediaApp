@@ -169,7 +169,7 @@ const ChatPageContainer = () => {
         formData.append("image", image);
       }
 
-      const response = await sendMessage(formData);
+      await sendMessage(formData);
 
       setText("");
 

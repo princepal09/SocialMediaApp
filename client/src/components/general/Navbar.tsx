@@ -1,10 +1,7 @@
-import { useDispatch, useSelector } from "react-redux";
+import {  useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { LoaderCircle, Search, User2, X, LogOut } from "lucide-react";
+import { LoaderCircle, Search, User2, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { logout } from "../../api/auth.api";
-import { toast } from "sonner";
-import { setLogout } from "../../store/slices/authSlice";
 import { useEffect, useRef, useState } from "react";
 import { SearchUser } from "../../types/searchUser";
 import { searchUsers } from "../../api/feed.api";
@@ -25,7 +22,7 @@ const Navbar = () => {
   const mobileSearchRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   // ================= SEARCH USERS =================
   useEffect(() => {
@@ -101,21 +98,21 @@ const Navbar = () => {
   };
 
   // ================= LOGOUT =================
-  const handleLogout = async () => {
-    try {
-      const response = await logout();
+  // const handleLogout = async () => {
+  //   try {
+  //     const response = await logout();
 
-      toast.success(response?.message || "Logged out successfully");
+  //     toast.success(response?.message || "Logged out successfully");
 
-      dispatch(setLogout());
+  //     dispatch(setLogout());
 
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to log out. Please try again.");
+  //     navigate("/login");
+  //   } catch (err: any) {
+  //     toast.error(err?.message || "Failed to log out. Please try again.");
 
-      console.error(err);
-    }
-  };
+  //     console.error(err);
+  //   }
+  // };
 
   return (
     <>

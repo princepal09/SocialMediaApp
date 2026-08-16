@@ -75,8 +75,8 @@ const FeedPage = () => {
             </div>
           ) : feedPosts.length === 0 ? (
             <div className="flex min-h-[60vh] items-center justify-center">
-              <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-900/30 px-6 py-14 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-2xl">
+              <div className="w-full max-w-md rounded-3xl border border-black/10 bg-black px-6 py-14 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-2xl">
                   📷
                 </div>
 

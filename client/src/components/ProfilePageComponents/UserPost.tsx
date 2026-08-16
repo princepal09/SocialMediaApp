@@ -253,7 +253,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
               <img
                 src={post.image}
                 alt="Post"
-                className="max-h-[500px] w-full rounded-xl object-cover"
+                className="max-h-[500px] w-full rounded-2xl object-cover"
               />
             )}
 
@@ -261,7 +261,7 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
             {post.video && (
               <HlsVideoPlayer
                 src={post.video}
-                className="max-h-[500px] w-full rounded-xl bg-black object-contain"
+                className="max-h-[500px] w-full rounded-2xl bg-black object-contain"
               />
             )}
           </div>

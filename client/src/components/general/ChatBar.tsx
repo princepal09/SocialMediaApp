@@ -94,7 +94,7 @@ const ChatBar = ({ onConversationClick }: ChatBarProps) => {
         )}
 
         {!loading && conversations.length > 0 && (
-          <div className="space-y-1">
+          <div className="space-y-1 flex flex-col md:gap-y-3 gap-y-8">
             {conversations.map((conversation) => {
               const otherUser = conversation.participants.find(
                 (p) => p._id !== loggedInUser?._id,

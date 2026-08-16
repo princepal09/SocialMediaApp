@@ -8,15 +8,18 @@ import { Home, LogOut, User2 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useSelector((state: RootState) => state.auth);
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleLogout = async () => {
     try {
       const response = await logout();
+
       toast.success(response?.message || "Logged out successfully");
 
       dispatch(setLogout());
+
       navigate("/login");
     } catch (err: any) {
       toast.error(err?.message || "Failed to log out. Please try again.");
@@ -24,44 +27,79 @@ const Sidebar = () => {
     }
   };
 
-  const baseClass =
-    "border border-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer flex gap-1 justify-center items-center hover:scale-[1.02]";
-
-  const inactiveClass = "bg-white/20 border-white";
-  const activeClass = "bg-[#9929EA] hover:bg-white/10";
+  const navItems = [
+    {
+      name: "Home",
+      path: "/feed",
+      icon: Home,
+    },
+    {
+      name: "Profile",
+      path: `/profile/${user?.username}`,
+      icon: User2,
+    },
+  ];
 
   return (
-    <aside className="w-64 shrink-0 h-full justify-between flex flex-col items-center border-r border-zinc-800 text-white">
-      <div className="flex gap-4 mt-4 flex-col">
-        <NavLink
-          to={"/feed"}
-          end
-          className={({ isActive }) =>
-            `${baseClass} ${isActive ? activeClass : inactiveClass}`
-          }
-          // className="border flex items-center gap-1 border-white/20 text-white hover:bg-white/10 bg-[#9929EA] px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opactiy-50 cursor-pointer hover:scale-[1.02]"
-        >
-          <Home size={17} />
-          Home
-        </NavLink>
-        <NavLink
-          end
-          className={({ isActive }) =>
-            `${baseClass} ${isActive ? activeClass : inactiveClass}`
-          }
-          to={`/profile/${user?.username}`}
-        >
-          <User2 size={17} />
-          Profile
-        </NavLink>
+    <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-white/10 bg-black text-white md:w-64">
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-5">
+        <nav className="space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                end={item.name === "Home"}
+                className={({ isActive }) =>
+                  `group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-lg shadow-violet-900/30"
+                      : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={19}
+                      className={
+                        isActive
+                          ? "text-white"
+                          : "text-zinc-500 transition group-hover:text-violet-400"
+                      }
+                    />
+
+                    <span>{item.name}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
       </div>
 
-      <div>
+      {/* User + Logout */}
+      <div className="border-t border-white/10 p-3">
+        {/* User */}
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          className="px-3 md:px-4  cursor-pointer flex mb-5 items-center justify-center gap-2 py-1.5 md:py-2 rounded-xl bg-red-500 hover:bg-[#8423c8] transition text-sm md:text-base"
+          className="
+    group flex w-full items-center gap-2 rounded-xl
+    px-4 py-3 text-sm font-medium text-red-400
+    transition-all duration-200
+    hover:bg-white/5 hover:text-red-300
+    active:scale-[0.98]
+  "
         >
-          <LogOut size={18} />
+          <LogOut
+            size={18}
+            className="transition-transform group-hover:-translate-x-1"
+          />
           Logout
         </button>
       </div>

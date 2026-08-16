@@ -136,7 +136,7 @@ const UploadPostContainer = () => {
   const isHlsVideo = mediaPreview.includes(".m3u8");
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full p-5 max-w-2xl">
       <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/20">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800 bg-neutral-900/80 px-5 py-4">

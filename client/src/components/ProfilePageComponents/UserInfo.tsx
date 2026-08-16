@@ -104,7 +104,7 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       );
     } catch (err: any) {
       toast.error(err.messsage || "Cannot send message");
-    }finally{
+    } finally {
       setMessageLoading(false);
     }
   };
@@ -121,7 +121,8 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
       return;
     }
 
-    const formData = new FormData();npm
+    const formData = new FormData();
+
     formData.append("profileImage", file);
 
     setImageUploading(true);
@@ -179,18 +180,22 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-5">
+    <div className="mx-auto w-full max-w-5xl px-3 py-4 sm:px-5 md:px-6 md:py-5">
       {/* Header */}
-
-      <div className="flex items-center justify-between">
-        {/* Left Side */}
-        <div className="flex items-center gap-5">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        {/* Profile section */}
+        <div className="flex min-w-0 items-center gap-3 sm:gap-5">
           {/* Profile Image */}
-          <div className="relative w-20 h-20">
+          <div className="relative h-16 w-16 shrink-0 sm:h-20 sm:w-20">
             <img
               src={user?.profileImage || "/defaultProfile.png"}
               alt={user?.username}
-              className="w-20 h-20 rounded-full object-cover border-2 border-violet-500 shadow-[0_0_25px_rgba(168,85,247,0.8)]"
+              className="
+              h-16 w-16 rounded-full object-cover
+              border-2 border-violet-500
+              shadow-[0_0_25px_rgba(168,85,247,0.8)]
+              sm:h-20 sm:w-20
+            "
             />
 
             {isOwnProfile && (
@@ -198,7 +203,15 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
                 type="button"
                 onClick={handlePickImage}
                 disabled={imageUploading}
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white hover:bg-gray-100 text-black flex items-center justify-center border border-gray-300 shadow-md transition-all duration-200 hover:scale-105"
+                className="
+                absolute bottom-0 right-0
+                flex h-7 w-7 items-center justify-center
+                rounded-full border border-gray-300
+                bg-white text-black shadow-md
+                transition-all duration-200
+                hover:scale-105 hover:bg-gray-100
+                disabled:opacity-50
+              "
               >
                 <Pencil size={14} />
               </button>
@@ -214,28 +227,38 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
           </div>
 
           {/* User Info */}
-          <div>
-            <h1 className="text-2xl font-bold text-white">@{user?.username}</h1>
-            <p className="text-sm text-zinc-400">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold text-white sm:text-2xl">
+              @{user?.username}
+            </h1>
+
+            <p className="truncate text-xs text-zinc-400 sm:text-sm">
+              {user?.email}
+            </p>
           </div>
         </div>
 
-        {/* Right Side */}
+        {/* Follow / Message buttons */}
         {!isOwnProfile && (
-          <div className="flex gap-3">
+          <div className="flex w-full flex-col gap-2 xs:flex-row md:w-auto md:flex-row md:gap-3">
             <button
               onClick={handleFollowToggle}
               disabled={loading}
               className={`
-          px-5 py-2 rounded-xl text-sm font-medium text-white
-          transition-all duration-300 active:scale-95
-          disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed
-          ${
-            isFollowing
-              ? "bg-zinc-700 hover:bg-red-600"
-              : "bg-violet-600 hover:bg-violet-700"
-          }
-        `}
+              w-full rounded-xl px-4 py-2.5
+              text-sm font-medium text-white
+              transition-all duration-300
+              active:scale-95
+              disabled:cursor-not-allowed
+              disabled:opacity-60
+              md:w-auto md:px-5
+
+              ${
+                isFollowing
+                  ? "bg-zinc-700 hover:bg-red-600"
+                  : "bg-violet-600 hover:bg-violet-700"
+              }
+            `}
             >
               {loading ? "Please wait..." : isFollowing ? "Unfollow" : "Follow"}
             </button>
@@ -243,18 +266,28 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
             <button
               disabled={messageLoading}
               onClick={handleClickMessage}
-              className="px-5 py-2 cursor-pointer rounded-xl border border-zinc-700 text-white text-sm transition-colors hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="
+              w-full cursor-pointer
+              rounded-xl border border-zinc-700
+              px-4 py-2.5
+              text-sm text-white
+              transition-colors
+              hover:bg-zinc-800
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+              md:w-auto md:px-5
+            "
             >
-              
-              Message
+              {messageLoading ? "Loading..." : "Message"}
             </button>
           </div>
         )}
       </div>
+
       {/* Bio */}
       {(user.bio || isOwnProfile) && (
-        <div className="mt-6 rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900 p-3 sm:mt-6 sm:rounded-2xl sm:p-4">
+          <div className="mb-3 flex items-center justify-between">
             <p className="text-[11px] uppercase tracking-widest text-zinc-500">
               Bio
             </p>
@@ -274,19 +307,30 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
               <textarea
                 value={bioInput}
                 onChange={(e) => setBioInput(e.target.value)}
-                rows={2}
+                rows={3}
                 maxLength={200}
                 placeholder="Write something about yourself..."
-                className="w-full rounded-lg bg-zinc-800 border border-zinc-700 p-3 text-white resize-none outline-none focus:border-violet-500"
+                className="
+                w-full resize-none rounded-lg
+                border border-zinc-700 bg-zinc-800
+                p-3 text-sm text-white outline-none
+                focus:border-violet-500
+                sm:text-base
+              "
               />
 
-              <div className="flex justify-end gap-2 mt-3">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
                 <button
                   onClick={() => {
                     setBioInput(user.bio || "");
                     setIsEditing(false);
                   }}
-                  className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600"
+                  className="
+                  w-full rounded-lg bg-zinc-700
+                  px-4 py-2 text-sm text-white
+                  hover:bg-zinc-600
+                  sm:w-auto
+                "
                 >
                   Cancel
                 </button>
@@ -294,42 +338,52 @@ const UserInfo = ({ user, setUserProfileInfo }: UserInfoProps) => {
                 <button
                   onClick={handleSaveBio}
                   disabled={bioLoading}
-                  className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-60"
+                  className="
+                  w-full rounded-lg bg-violet-600
+                  px-4 py-2 text-sm text-white
+                  hover:bg-violet-700
+                  disabled:opacity-60
+                  sm:w-auto
+                "
                 >
                   {bioLoading ? "Saving..." : "Save"}
                 </button>
               </div>
             </>
           ) : (
-            <p className="text-sm text-zinc-200">{user.bio}</p>
+            <p className="break-words text-sm text-zinc-200">{user.bio}</p>
           )}
         </div>
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mt-5">
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 py-4 text-center">
-          <h2 className="text-2xl font-bold text-white">{user.postCount}</h2>
+      <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-center sm:rounded-2xl sm:py-4">
+          <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
+            {user.postCount}
+          </h2>
 
-          <p className="text-[11px] tracking-widest uppercase text-zinc-500">
+          <p className="truncate text-[9px] uppercase tracking-wide text-zinc-500 sm:text-[11px] sm:tracking-widest">
             Posts
           </p>
         </div>
 
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 py-4 text-center">
-          <h2 className="text-2xl font-bold text-white">{followersCount}</h2>
+        <div className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-center sm:rounded-2xl sm:py-4">
+          <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
+            {followersCount}
+          </h2>
 
-          <p className="text-[11px] tracking-widest uppercase text-zinc-500">
+          <p className="truncate text-[9px] uppercase tracking-wide text-zinc-500 sm:text-[11px] sm:tracking-widest">
             Followers
           </p>
         </div>
 
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 py-4 text-center">
-          <h2 className="text-2xl font-bold text-white">
+        <div className="min-w-0 rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-center sm:rounded-2xl sm:py-4">
+          <h2 className="truncate text-lg font-bold text-white sm:text-2xl">
             {user.followingCount}
           </h2>
 
-          <p className="text-[11px] tracking-widest uppercase text-zinc-500">
+          <p className="truncate text-[9px] uppercase tracking-wide text-zinc-500 sm:text-[11px] sm:tracking-widest">
             Following
           </p>
         </div>

@@ -6,7 +6,7 @@ interface UserPostsProps {
   onDeletePost : (postId:string) => void;
 }
 
-const UserPosts = ({ userPosts, onDeletePost}: UserPostsProps) => {
+const UserPosts = ({ userPosts, onDeletePost }: UserPostsProps) => {
   if (!userPosts?.length) {
     return (
       <div className="py-10 text-center text-zinc-400">
@@ -14,17 +14,21 @@ const UserPosts = ({ userPosts, onDeletePost}: UserPostsProps) => {
       </div>
     );
   }
-  
 
   return (
-   <div className="flex w-full mt-22 flex-col items-center gap-6">
-  {userPosts.map((post) => (
-    <div key={post._id} className="w-full max-w-2xl">
-      <UserPost onDeletePost = {onDeletePost} post={post} />
+    <div className="mt-6 flex w-full flex-col items-center gap-4 sm:gap-6">
+      {userPosts.map((post) => (
+        <div
+          key={post._id}
+          className="w-full max-w-2xl"
+        >
+          <UserPost
+            onDeletePost={onDeletePost}
+            post={post}
+          />
+        </div>
+      ))}
     </div>
-  ))}
-</div>
   );
 };
-
 export default UserPosts;

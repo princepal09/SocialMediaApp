@@ -76,7 +76,7 @@ const ChatPageContainer = () => {
     if (!socket) return;
     socket.emit("join_conversation", conversationId);
 
-    const handleNewMessage = async(msg: Message) => {
+    const handleNewMessage = async (msg: Message) => {
       setMessages((prev) => {
         if (prev.some((m) => m._id === msg._id)) return prev;
         return [...prev, msg];
@@ -198,14 +198,14 @@ const ChatPageContainer = () => {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-80px)] items-center justify-center bg-black">
+      <div className="flex h-full items-center justify-center bg-black">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden bg-black text-white">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white">
       {/* ================= HEADER ================= */}
 
       <header className="flex items-center justify-between border-b border-white/10 bg-black px-5 py-4">

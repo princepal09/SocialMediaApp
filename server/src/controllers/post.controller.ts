@@ -36,7 +36,7 @@ export const createPost = async (req: Request, res: Response) => {
       );
     }
 
-    const { content } = req.body;
+    const { content } = req.body ?? {};
     const userId = req.user?.id;
 
     if (!userId) {
@@ -67,11 +67,7 @@ export const createPost = async (req: Request, res: Response) => {
     if (hasVideo && files.video?.[0]?.path) {
       const videoResult = await uploadVideoToCloudinary(files.video[0].path);
 
-      if (!videoResult) {
-        throw new ApiError(500, "Failed to upload video to Cloudinary");
-      }
-
-      videoUrl = videoResult.eager?.[0]?.secure_url ?? videoResult.secure_url;
+      videoUrl = videoResult.secure_url;
     }
 
     const sanitizedContent = hasContent
@@ -97,14 +93,13 @@ export const createPost = async (req: Request, res: Response) => {
         })
       : "";
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      throw new ApiError(404, "User not found");
+    const text = sanitizeHtml(sanitizedContent, { allowedTags: [] }).replace(/&nbsp;/g, " ").trim();
+    if (!text && !imageUrl && !videoUrl) {
+      throw new ApiError(400, "Post must contain text, an image, or a video");
     }
 
     const post = await Post.create({
-      content: sanitizedContent,
+      content: text ? sanitizedContent : "",
       image: imageUrl,
       video: videoUrl,
       owner: userId,
@@ -116,25 +111,21 @@ export const createPost = async (req: Request, res: Response) => {
       },
     });
 
-    const populatedPost = await Post.findById(post._id)
-      .populate("owner", "username profileImage")
-      .lean();
-
-    if (!populatedPost) {
-      throw new ApiError(500, "Failed to populate post");
-    }
-
     const formattedPost = {
-      ...populatedPost,
+      ...post.toObject(),
+      owner: {
+        _id: req.user?._id,
+        username: req.user?.username,
+        profileImage: req.user?.profileImage,
+      },
       likes: [],
-      likeCount: 0,
+      likesCount: 0,
       commentsCount: 0,
       comments: [],
     };
 
+    await invalidatePostCaches(req.user?.username);
     io.emit("new_post", formattedPost);
-
-    await invalidatePostCaches(user.username);
 
     return res
       .status(201)
@@ -159,12 +150,58 @@ export const createPost = async (req: Request, res: Response) => {
   }
 };
 
-//here i need to implement the mongodb aggregation pipeline to get the comments
+async function getFeedPage(req: Request, res: Response, userId: mongoose.Types.ObjectId) {
+  const { limit, before } = req.query;
+  const pageSize = typeof limit === "string" ? Number(limit) : NaN;
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 30) {
+    throw new ApiError(400, "Feed page size must be between 1 and 30.");
+  }
+
+  const filters: mongoose.PipelineStage[] = [];
+  if (before !== undefined) {
+    const [time, id, extra] = typeof before === "string" ? before.split("~") : [];
+    const date = new Date(time ?? "");
+    if (extra !== undefined || !id || !/^[0-9a-f]{24}$/i.test(id) || !Number.isFinite(date.getTime())) {
+      throw new ApiError(400, "Invalid feed cursor.");
+    }
+    filters.push({ $match: {
+      $or: [{ createdAt: { $lt: date } }, { createdAt: date, _id: { $lt: new mongoose.Types.ObjectId(id) } }],
+    } });
+  }
+
+  const posts = await Post.aggregate([
+    ...filters,
+    { $sort: { createdAt: -1, _id: -1 } },
+    { $limit: pageSize + 1 },
+    { $project: {
+      content: 1, image: 1, video: 1, owner: 1, createdAt: 1, updatedAt: 1,
+      likesCount: { $size: { $ifNull: ["$likes", []] } },
+      likes: { $setIntersection: [{ $ifNull: ["$likes", []] }, [userId]] },
+      commentsCount: { $size: { $ifNull: ["$comments", []] } },
+      comments: { $literal: [] },
+    } },
+    { $lookup: {
+      from: "users", localField: "owner", foreignField: "_id", as: "owner",
+      pipeline: [{ $project: { username: 1, profileImage: 1 } }],
+    } },
+    { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+  ]);
+  const data = posts.slice(0, pageSize);
+  const last = data.at(-1);
+  return res.json({
+    ...new ApiResponse(200, data, "Posts fetched successfully"),
+    nextCursor: posts.length > pageSize && last ? `${last.createdAt.toISOString()}~${last._id}` : null,
+  });
+}
+
 export const getAllPostsForHome = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
     if (!userId) {
       throw new ApiError(401, "Not authorized");
+    }
+    if (req.query.limit !== undefined || req.query.before !== undefined) {
+      return await getFeedPage(req, res, userId);
     }
 
     const cacheKey = "home:posts";
@@ -599,7 +636,7 @@ export const deletePost = async (req: Request, res: Response) => {
 
     // Delete video from Cloudinary
     if (typeof post.video === "string" && post.video.length > 0) {
-      await removeFromCloudinary(post.video);
+      await removeFromCloudinary(post.video, "video");
     }
 
     // Delete post from MongoDB

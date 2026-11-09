@@ -32,6 +32,7 @@ const MobileBottomNav = ({
         {/* HOME */}
         <NavLink
           to="/feed"
+          aria-label="Home"
           end
           className={({ isActive }) => navItemClass(isActive)}
         >
@@ -42,6 +43,7 @@ const MobileBottomNav = ({
         <button
           type="button"
           onClick={onChatClick}
+          aria-label="Open chats"
           className="
             flex flex-1 flex-col items-center
             justify-center gap-1 py-2
@@ -55,6 +57,7 @@ const MobileBottomNav = ({
         {/* PROFILE */}
         <NavLink
           to={`/profile/${user?.username}`}
+          aria-label="Profile"
           className={({ isActive }) => navItemClass(isActive)}
         >
           <User2 size={22} />
@@ -64,6 +67,7 @@ const MobileBottomNav = ({
         <button
           type="button"
           onClick={onMenuClick}
+          aria-label="Open menu"
           className="
             flex flex-1 flex-col items-center
             justify-center gap-1 py-2

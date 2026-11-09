@@ -4,7 +4,8 @@ import { createPost } from "../../api/post.api";
 import PostEditor from "./PostEditor";
 import { Upload, X, Image, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import HlsVideoPlayer from "../general/HlsVideoPlayer";
+const imageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
+const videoTypes = ["video/mp4", "video/webm", "video/quicktime"];
 
 const UploadPostContainer = () => {
   const [content, setContent] = useState("");
@@ -17,6 +18,7 @@ const UploadPostContainer = () => {
   >(null);
 
   const [loading, setLoading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -52,8 +54,8 @@ const UploadPostContainer = () => {
 
     if (!file) return;
 
-    // Image validation
-    if (file.type.startsWith("image/")) {
+    setPreviewError(false);
+    if (imageTypes.includes(file.type)) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Image must be less than 5MB");
         e.target.value = "";
@@ -64,8 +66,7 @@ const UploadPostContainer = () => {
       return;
     }
 
-    // Video validation
-    if (file.type.startsWith("video/")) {
+    if (videoTypes.includes(file.type)) {
       if (file.size > 50 * 1024 * 1024) {
         toast.error("Video must be less than 50MB");
         e.target.value = "";
@@ -76,7 +77,7 @@ const UploadPostContainer = () => {
       return;
     }
 
-    toast.error("Please select a valid image or video");
+    toast.error("Choose a JPG, PNG, WebP, GIF, AVIF, MP4, MOV, or WebM file.");
 
     e.target.value = "";
   };
@@ -133,8 +134,6 @@ const UploadPostContainer = () => {
     }
   };
 
-  const isHlsVideo = mediaPreview.includes(".m3u8");
-
   return (
     <div className="mx-auto w-full p-5 max-w-2xl">
       <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/20">
@@ -185,18 +184,19 @@ const UploadPostContainer = () => {
               {/* Video Preview */}
               {mediaType === "video" && (
                 <>
-                  {isHlsVideo ? (
-                    <HlsVideoPlayer
-                      src={mediaPreview}
-                      className="max-h-[420px] w-full bg-black object-contain"
-                    />
-                  ) : (
-                    <video
-                      src={mediaPreview}
-                      controls
-                      playsInline
-                      className="max-h-[420px] w-full bg-black object-contain"
-                    />
+                  <video
+                    src={mediaPreview}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    aria-label="Video preview"
+                    onError={() => setPreviewError(true)}
+                    className="max-h-[420px] w-full bg-black object-contain"
+                  />
+                  {previewError && (
+                    <p role="status" className="p-3 text-sm text-neutral-300">
+                      This browser can’t preview this file. Pixora converts it to MP4 when you post.
+                    </p>
                   )}
                 </>
               )}
@@ -205,6 +205,7 @@ const UploadPostContainer = () => {
               <button
                 type="button"
                 onClick={removeMedia}
+                disabled={loading}
                 className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white opacity-100 backdrop-blur-sm transition hover:bg-red-500 sm:opacity-0 sm:group-hover:opacity-100"
                 aria-label="Remove media"
               >
@@ -226,8 +227,9 @@ const UploadPostContainer = () => {
               ref={fileInputRef}
               id="post-media"
               type="file"
-              accept="image/*,video/*"
+              accept={[...imageTypes, ...videoTypes].join(",")}
               className="hidden"
+              disabled={loading}
               onChange={handleMediaChange}
             />
 

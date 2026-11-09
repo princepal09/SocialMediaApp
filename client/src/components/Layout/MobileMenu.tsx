@@ -1,39 +1,16 @@
 import { Home, User2, LogOut, X } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 import { RootState } from "../../store/store";
-import { logout } from "../../api/auth.api";
-import { setLogout } from "../../store/slices/authSlice";
-import { toast } from "sonner";
 
 interface MobileMenuProps {
   onClose: () => void;
+  onLogout: () => void;
 }
 
-const MobileMenu = ({ onClose }: MobileMenuProps) => {
+const MobileMenu = ({ onClose, onLogout }: MobileMenuProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const handleLogout = async () => {
-    try {
-      const response = await logout();
-
-      toast.success(response?.message || "Logged out successfully");
-
-      dispatch(setLogout());
-
-      onClose();
-
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(
-        err?.message || "Failed to log out. Please try again.",
-      );
-    }
-  };
 
   const navItems = [
     {
@@ -121,7 +98,7 @@ const MobileMenu = ({ onClose }: MobileMenuProps) => {
       <div className="border-t border-white/10 px-5 py-5">
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={onLogout}
           className="
             flex w-full items-center gap-4
             px-2 py-4

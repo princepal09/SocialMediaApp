@@ -3,14 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { getPostById } from "../api/post.api";
 import Spinner from "../components/general/Spinner";
 import EditPostContainer from "../components/EditPostPageComponents/EditPostContainer";
-import AppLayout from "../components/Layout/AppLayout";
 
 const EditPostPage = () => {
   const { postId } = useParams();
   return (
-    <AppLayout>
-      <EditPost key={postId} postId={postId} />
-    </AppLayout>
+    <EditPost key={postId} postId={postId} />
   );
 };
 

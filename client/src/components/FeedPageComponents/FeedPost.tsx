@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { FeedPostType } from "../../types/feed";
 import { RootState } from "../../store/store";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { toggleLikePost } from "../../api/like.api";
 import { Heart, MessageCircle, Trash2, User2, Send } from "lucide-react";
@@ -23,7 +23,7 @@ const FeedPost = ({ post }: FeedPostProps) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [likes, setLikes] = useState<string[]>(post.likes);
-  const [likeCount, setLikeCount] = useState<number>(post.likesCount);
+  const [likeCount, setLikeCount] = useState<number>(post.likesCount ?? post.likes.length);
   const [loading, setLoading] = useState<boolean>(false);
 
   const [createCommentLoading, setCreateCommentLoading] =
@@ -72,18 +72,8 @@ const FeedPost = ({ post }: FeedPostProps) => {
 
       await toggleLikePost(post._id);
     } catch (err: any) {
-      console.log(err);
-
-      if (isLikedByMe) {
-        setLikes((prev) => prev.filter((id) => id !== user._id));
-
-        setLikeCount((prev) => prev - 1);
-      } else {
-        setLikes((prev) => [...prev, user._id]);
-
-        setLikeCount((prev) => prev + 1);
-      }
-
+      setLikes(likes);
+      setLikeCount(likeCount);
       toast.error(err?.message ?? "Something went wrong");
     } finally {
       setLoading(false);
@@ -184,6 +174,8 @@ const FeedPost = ({ post }: FeedPostProps) => {
                 <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-black">
                   {post?.owner?.profileImage ? (
                     <img
+                      loading="lazy"
+                      decoding="async"
                       src={post.owner.profileImage}
                       alt={post.owner.username}
                       className="h-full w-full object-cover"
@@ -242,6 +234,8 @@ const FeedPost = ({ post }: FeedPostProps) => {
           <div className="w-full rounded-2xl  border-y border-white/10 bg-black">
             {post.image && (
               <img
+                loading="lazy"
+                decoding="async"
                 src={post.image}
                 alt="Post"
                 className="max-h-[75vh] w-full rounded-2xl object-contain sm:max-h-[650px]"
@@ -437,4 +431,4 @@ const FeedPost = ({ post }: FeedPostProps) => {
   );
 };
 
-export default FeedPost;
+export default memo(FeedPost);

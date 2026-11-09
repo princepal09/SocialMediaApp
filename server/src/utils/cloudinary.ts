@@ -20,20 +20,21 @@ export const uploadVideoToCloudinary = async (localFilePath: string) => {
   try {
     return await cloudinary.uploader.upload(localFilePath, {
       resource_type: "video",
-      eager: [{ streaming_profile: "full_hd", format: "m3u8" }],
-      eager_async: false,
+      format: "mp4",
+      transformation: [{ crop: "limit", width: 1280, height: 1280, quality: "auto", video_codec: "h264" }],
+      timeout: 90_000,
     });
   } catch {
     throw new ApiError(502, "Video upload failed. Check the file or try again.");
   }
 };
 
-export const removeFromCloudinary = async (imageUrl: string) => {
+export const removeFromCloudinary = async (url: string, resourceType: "image" | "video" = "image") => {
   try {
-    const fileName = new URL(imageUrl).pathname.split("/").pop();
+    const fileName = new URL(url).pathname.split("/").pop();
     const publicId = fileName?.slice(0, fileName.lastIndexOf("."));
-    if (publicId) await cloudinary.uploader.destroy(publicId);
+    if (publicId) await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch {
-    console.error("Could not remove the image from Cloudinary.");
+    console.error("Could not remove media from Cloudinary.");
   }
 };

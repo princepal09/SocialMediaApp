@@ -1,31 +1,10 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { NavLink, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { logout } from "../../api/auth.api";
-import { setLogout } from "../../store/slices/authSlice";
-import { Home, LogOut, User2 } from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { Home, LogOut, MessageCircle, User2 } from "lucide-react";
 
-const Sidebar = () => {
+const Sidebar = ({ onLogout, onChat }: { onLogout: () => void; onChat: () => void }) => {
   const { user } = useSelector((state: RootState) => state.auth);
-
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-
-  const handleLogout = async () => {
-    try {
-      const response = await logout();
-
-      toast.success(response?.message || "Logged out successfully");
-
-      dispatch(setLogout());
-
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to log out. Please try again.");
-      console.error(err);
-    }
-  };
 
   const navItems = [
     {
@@ -78,6 +57,9 @@ const Sidebar = () => {
               </NavLink>
             );
           })}
+          <button type="button" onClick={onChat} className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-zinc-400 hover:bg-white/5 hover:text-white xl:hidden">
+            <MessageCircle size={19} aria-hidden="true" /> Chats
+          </button>
         </nav>
       </div>
 
@@ -87,7 +69,7 @@ const Sidebar = () => {
 
         {/* Logout */}
         <button
-          onClick={handleLogout}
+          onClick={onLogout}
           className="
     group flex w-full items-center gap-2 rounded-xl
     px-4 py-3 text-sm font-medium text-red-400

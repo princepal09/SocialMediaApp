@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { env } from "./constants.js";
 import { getAccessUser } from "./middlewares/auth.middleware.js";
+import jwt from "jsonwebtoken";
 
 export const io = new Server({
   cors: { origin: env.CORS_ORIGINS, credentials: true },
@@ -18,11 +19,17 @@ io.use(async (socket, next) => {
       socket.data.userId = user.id;
       return next();
     }
-  } catch {
-    // Reject invalid sessions without revealing token or database details.
+  } catch (error) {
+    if (!(error instanceof jwt.JsonWebTokenError)) {
+      return next(Object.assign(new Error("Realtime service is temporarily unavailable."), {
+        data: { code: "REALTIME_UNAVAILABLE" },
+      }));
+    }
   }
 
-  next(new Error("Sign in to connect to Pixora."));
+  next(Object.assign(new Error("Sign in to connect to Pixora."), {
+    data: { code: "SESSION_REQUIRED" },
+  }));
 });
 
 io.on("connection", (socket) => {

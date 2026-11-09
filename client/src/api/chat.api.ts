@@ -5,10 +5,8 @@ export const getMyFollowers = async () => {
   return response.data;
 };
 
-export const getUserConversations = async () => {
-  const response = await api.get("/chat/user-conversations");
-  // console.log(response.data);
-
+export const getUserConversations = async (signal?: AbortSignal) => {
+  const response = await api.get("/chat/user-conversations", { signal });
   return response.data;
 };
 export const markSeen = async (conversationId : string) => {
@@ -21,8 +19,8 @@ export const getOrCreateConversations = async (receiverId: string) => {
   return response.data;
 };
 
-export const getMessages = async (conversationId: string) => {
-  const response = await api.get(`/chat/messages/${conversationId}`);
+export const getMessages = async (conversationId: string, signal?: AbortSignal) => {
+  const response = await api.get(`/chat/messages/${conversationId}`, { signal });
   return response.data;
 };
 

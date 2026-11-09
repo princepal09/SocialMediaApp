@@ -5,7 +5,10 @@ const postSchema = new mongoose.Schema<IPost>(
   {
     content: {
       type: String,
-      required: true,
+      default: "",
+      required(this: IPost): boolean {
+        return !this.image && !this.video;
+      },
     },
     image: {
       type: String,
@@ -35,5 +38,7 @@ const postSchema = new mongoose.Schema<IPost>(
     timestamps: true,
   }
 );
+
+postSchema.index({ createdAt: -1, _id: -1 });
 
 export const Post = mongoose.model<IPost>("Post", postSchema);

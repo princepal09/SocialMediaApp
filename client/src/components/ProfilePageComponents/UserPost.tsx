@@ -251,6 +251,8 @@ const UserPost = ({ post, onDeletePost }: UserPostProps) => {
             {/* Image */}
             {post.image && (
               <img
+                loading="lazy"
+                decoding="async"
                 src={post.image}
                 alt="Post"
                 className="max-h-[500px] w-full rounded-2xl object-cover"

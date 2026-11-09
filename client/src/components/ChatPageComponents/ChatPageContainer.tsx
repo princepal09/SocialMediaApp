@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Message } from "../../types/chat";
 import { toast } from "sonner";
-import { connectSocket } from "../../socket";
+import { socket } from "../../socket";
 
 import {
   getMessages,
@@ -14,6 +14,12 @@ import Spinner from "../general/Spinner";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Send, Image as ImageIcon, X, LoaderCircle } from "lucide-react";
+
+function mergeMessages(current: Message[], incoming: Message[]) {
+  const merged = new Map(current.map((message) => [message._id, message]));
+  incoming.forEach((message) => merged.set(message._id, message));
+  return [...merged.values()].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() || a._id.localeCompare(b._id));
+}
 
 interface ReceiverState {
   username?: string;
@@ -45,6 +51,7 @@ const ChatPageContainer = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [sending, setSending] = useState(false);
+  const [live, setLive] = useState(socket.connected);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
 
@@ -60,15 +67,12 @@ const ChatPageContainer = () => {
       try {
         const { data } = await getOrCreateConversations(receiverId);
         if (!active) return;
-        const { data: history } = await getMessages(data._id);
-        if (!active) return;
-        setMessages([...history].reverse());
         setConversationId(data._id);
-        void markSeen(data._id).catch(() => {});
       } catch (err: any) {
-        if (active) setLoadError(err.message || "Failed to load messages.");
-      } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoadError(err.message || "Failed to load messages.");
+          setLoading(false);
+        }
       }
     };
 
@@ -78,20 +82,62 @@ const ChatPageContainer = () => {
 
   useEffect(() => {
     if (!conversationId || !currentUser?._id) return;
-    const socket = connectSocket();
+    let request: AbortController | undefined;
+    let seenTimer: ReturnType<typeof setTimeout>;
+
+    const queueSeen = () => {
+      clearTimeout(seenTimer);
+      seenTimer = setTimeout(() => void markSeen(conversationId).catch(() => {}), 200);
+    };
+
+    const syncMessages = () => {
+      request?.abort();
+      const controller = new AbortController();
+      request = controller;
+      void getMessages(conversationId, controller.signal)
+        .then(({ data }: { data: Message[] }) => {
+          if (controller.signal.aborted) return;
+          setMessages((previous) => mergeMessages(previous, data));
+          setLoadError("");
+          queueSeen();
+        })
+        .catch((error: { message?: string }) => {
+          if (!controller.signal.aborted) setLoadError(error.message || "Failed to load messages.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    };
 
     const handleNewMessage = (data: { conversationId: string; message: Message }) => {
       if (data.conversationId !== conversationId) return;
       const { message } = data;
-      setMessages((previous) => previous.some(({ _id }) => _id === message._id) ? previous : [...previous, message]);
-      if (message.sender?._id !== currentUser._id) {
-        void markSeen(conversationId).catch(() => {});
-      }
+      setMessages((previous) => mergeMessages(previous, [message]));
+      if (message.sender?._id !== currentUser._id) queueSeen();
     };
+    const handleConnect = () => {
+      setLive(true);
+      syncMessages();
+    };
+    const handleDisconnect = () => setLive(false);
 
     socket.on("new_message", handleNewMessage);
-    return () => { socket.off("new_message", handleNewMessage); };
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    setLive(socket.connected);
+    syncMessages();
+    return () => {
+      request?.abort();
+      clearTimeout(seenTimer);
+      socket.off("new_message", handleNewMessage);
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+    };
   }, [conversationId, currentUser?._id]);
+
+  useEffect(() => {
+    return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
+  }, [imagePreview]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -116,11 +162,6 @@ const ChatPageContainer = () => {
       return;
     }
 
-    // Remove previous preview URL
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
     setImage(file);
 
     const previewUrl = URL.createObjectURL(file);
@@ -129,10 +170,6 @@ const ChatPageContainer = () => {
   };
 
   const removeImage = () => {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
     setImage(null);
     setImagePreview(null);
 
@@ -165,23 +202,7 @@ const ChatPageContainer = () => {
 
       const response = await sendMessage(formData);
 
-      console.log("Message response:", response);
-
-      const newMessage = response?.data;
-
-      if (newMessage) {
-        setMessages((prev) => {
-          if (
-            prev.some(
-              (existingMessage) => existingMessage._id === newMessage._id,
-            )
-          ) {
-            return prev;
-          }
-
-          return [...prev, newMessage];
-        });
-      }
+      if (response?.data) setMessages((previous) => mergeMessages(previous, [response.data]));
 
       setText("");
 
@@ -257,6 +278,9 @@ const ChatPageContainer = () => {
             </div>
           </div>
         </Link>
+        <span role="status" className={live ? "text-xs text-emerald-300" : "text-xs text-zinc-400"}>
+          {live ? "Live" : "Live updates offline"}
+        </span>
       </header>
 
       {/* ================= MESSAGES ================= */}

@@ -1,106 +1,124 @@
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-
+import { useDispatch } from "react-redux";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { logout } from "../../api/auth.api";
+import { setLogout } from "../../store/slices/authSlice";
 import Navbar from "../general/Navbar";
 import Sidebar from "../general/Sidebar";
+import ConfirmationModal from "../general/ConfirmationModal";
+import Spinner from "../general/Spinner";
 import MobileBottomNav from "./MobileBottomNav";
-import ChatBar from "../general/ChatBar";
 import MobileMenu from "./MobileMenu";
 
-const AppLayout = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [chatOpen, setChatOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+const ChatBar = lazy(() => import("../general/ChatBar"));
+const wideLayout = "(min-width: 1280px)";
 
-  /* ================= CHAT ================= */
+export default function AppLayout() {
+  const [panel, setPanel] = useState<"chat" | "menu" | null>(null);
+  const [wide, setWide] = useState(() => window.matchMedia(wideLayout).matches);
+  const [chatMounted, setChatMounted] = useState(wide);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const main = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const handleChatClick = () => {
-    setChatOpen(true);
-    setMenuOpen(false);
+  useEffect(() => {
+    const query = window.matchMedia(wideLayout);
+    const onResize = () => {
+      setWide(query.matches);
+      if (query.matches) {
+        setChatMounted(true);
+        setPanel(null);
+      }
+    };
+    query.addEventListener("change", onResize);
+    return () => query.removeEventListener("change", onResize);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (main.current) main.current.scrollTop = 0;
+  }, [pathname]);
+
+  const openChat = () => {
+    setChatMounted(true);
+    setPanel("chat");
   };
 
-  const handleCloseChat = () => {
-    setChatOpen(false);
+  const closePanel = () => setPanel(null);
+
+  const requestLogout = () => {
+    setLogoutError("");
+    setLogoutOpen(true);
   };
 
-  /* ================= MENU ================= */
-
-  const handleMenuClick = () => {
-    setMenuOpen(true);
-    setChatOpen(false);
-  };
-
-  const handleCloseMenu = () => {
-    setMenuOpen(false);
+  const confirmLogout = async () => {
+    setLogoutPending(true);
+    setLogoutError("");
+    try {
+      await logout();
+    } catch (error) {
+      const failure = error as { status?: number; message?: string };
+      if (failure.status !== 401) {
+        setLogoutError(failure.message || "Couldn’t log out. Please try again.");
+        return;
+      }
+    } finally {
+      setLogoutPending(false);
+    }
+    dispatch(setLogout());
+    navigate("/login", { replace: true });
+    toast.success("You’ve been logged out.");
   };
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-black text-white">
-      {/* ================= NAVBAR ================= */}
       <Navbar />
-
-      {/* ================= BODY ================= */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* DESKTOP / LAPTOP SIDEBAR */}
         <aside className="hidden h-full w-64 shrink-0 lg:block">
-          <Sidebar />
+          <Sidebar onLogout={requestLogout} onChat={openChat} />
         </aside>
-
-        {/* MAIN CONTENT */}
-        <main className="min-w-0 flex-1 overflow-y-auto pb-13 lg:pb-0">
-          {children}
+        <main ref={main} className="min-w-0 flex-1 overflow-y-auto pb-13 lg:pb-0">
+          <Suspense fallback={<Spinner fullScreen={false} text="Loading Pixora…" />}>
+            <Outlet />
+          </Suspense>
         </main>
-
-        {/* DESKTOP CHAT BAR */}
-        <aside className="hidden h-full w-72 shrink-0 xl:block">
-          <ChatBar />
-        </aside>
+        {chatMounted && (
+          <aside className={wide ? "h-full w-72 shrink-0" : panel === "chat" ? "fixed inset-0 z-[100] bg-black" : "hidden"}>
+            {!wide && panel === "chat" && (
+              <button type="button" onClick={closePanel} aria-label="Close chats" className="absolute right-4 top-4 z-20 grid size-10 place-items-center text-zinc-400 hover:text-white">
+                <X size={22} />
+              </button>
+            )}
+            <Suspense fallback={<p className="p-6 text-sm text-zinc-400">Loading chats…</p>}>
+              <ChatBar onConversationClick={closePanel} />
+            </Suspense>
+          </aside>
+        )}
       </div>
-
-      {/* ================= MOBILE + TABLET BOTTOM NAV ================= */}
-      <MobileBottomNav
-        onChatClick={handleChatClick}
-        onMenuClick={handleMenuClick}
-      />
-
-      {/* ================= MOBILE + TABLET FULL SCREEN MENU ================= */}
-      {menuOpen && (
+      <MobileBottomNav onChatClick={openChat} onMenuClick={() => setPanel("menu")} />
+      {panel === "menu" && (
         <div className="fixed inset-0 z-[100] bg-black lg:hidden">
-          <MobileMenu onClose={handleCloseMenu} />
+          <MobileMenu onClose={closePanel} onLogout={requestLogout} />
         </div>
       )}
-
-      {/* ================= MOBILE + TABLET CHAT ================= */}
-      {chatOpen && (
-        <div className="fixed inset-0 z-[100] bg-black lg:hidden">
-          {/* CLOSE BUTTON */}
-          <button
-            type="button"
-            onClick={handleCloseChat}
-            className="
-              absolute right-4 top-4 z-20
-              flex h-10 w-10
-              items-center justify-center
-              text-zinc-400
-              transition
-              hover:text-white
-            "
-            aria-label="Close chat"
-          >
-            <X size={22} />
-          </button>
-
-          {/* CHAT BAR */}
-          <ChatBar
-            onConversationClick={handleCloseChat}
-          />
-        </div>
+      {logoutOpen && (
+        <ConfirmationModal
+          isOpen
+          title="Log out of Pixora?"
+          message="You’ll need to sign in again to access your feed and messages."
+          confirmLabel="Log out"
+          pendingLabel="Logging out…"
+          loading={logoutPending}
+          error={logoutError}
+          onClose={() => setLogoutOpen(false)}
+          onConfirm={confirmLogout}
+        />
       )}
     </div>
   );
-};
-
-export default AppLayout;
+}

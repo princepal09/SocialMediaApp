@@ -237,12 +237,12 @@ export const markSeen = async (req: Request, res: Response) => {
     if (!(await Conversation.exists({ _id: conversationId, participants: userId }))) {
       throw new ApiError(404, "Conversation not found.");
     }
-    await Message.updateMany(
+    const { modifiedCount } = await Message.updateMany(
       { conversation: conversationId, seenBy: { $ne: userId } },
       { $addToSet: { seenBy: userId } }
     );
 
-    io.to(userId.toString()).emit("conversation_updated");
+    if (modifiedCount > 0) io.to(userId.toString()).emit("conversation_updated");
 
     return res
       .status(200)
@@ -278,21 +278,18 @@ export const getUserConversation = async (req: Request, res: Response) => {
           select: "username profileImage",
         },
       })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean();
 
-    const conversationsWithUnread = await Promise.all(
-      conversations.map(async (conv) => {
-        const unreadCount = await Message.countDocuments({
-          conversation: conv._id,
-          seenBy: { $ne: userId },
-        });
-
-        return {
-          ...conv.toObject(),
-          unreadCount,
-        };
-      })
-    );
+    const unread = conversations.length ? await Message.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      { $match: { conversation: { $in: conversations.map(({ _id }) => _id) }, seenBy: { $ne: userId } } },
+      { $group: { _id: "$conversation", count: { $sum: 1 } } },
+    ]) : [];
+    const counts = new Map(unread.map(({ _id, count }) => [_id.toString(), count]));
+    const conversationsWithUnread = conversations.map((conversation) => ({
+      ...conversation,
+      unreadCount: counts.get(conversation._id.toString()) ?? 0,
+    }));
 
     return res
       .status(200)

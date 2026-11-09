@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getUserConversations } from "../../api/chat.api";
 import { MessageCircle } from "lucide-react";
@@ -6,7 +6,7 @@ import { NavLink } from "react-router-dom";
 import { Conversastion } from "../../types/chat";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { connectSocket } from "../../socket";
+import { socket } from "../../socket";
 
 interface ChatBarProps {
   onConversationClick?: () => void;
@@ -14,42 +14,46 @@ interface ChatBarProps {
 
 const ChatBar = ({ onConversationClick }: ChatBarProps) => {
   const [conversations, setConversations] = useState<Conversastion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loggedInUser = useSelector((state: RootState) => state.auth.user);
 
-  const loadConversations = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const response = await getUserConversations();
-
-      setConversations(response?.data || []);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to fetch conversations");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadConversations();
-
     if (!loggedInUser?._id) return;
+    let request: AbortController | undefined;
+    let timer: ReturnType<typeof setTimeout>;
 
-    const socket = connectSocket();
-
-    const handleConversationUpdate = () => {
-      console.log("🔄 Conversation updated");
-      loadConversations();
+    const loadConversations = () => {
+      request?.abort();
+      const controller = new AbortController();
+      request = controller;
+      void getUserConversations(controller.signal)
+        .then(({ data }) => {
+          if (!controller.signal.aborted) setConversations(data ?? []);
+        })
+        .catch((error: { message?: string }) => {
+          if (!controller.signal.aborted) toast.error(error.message || "Couldn’t load chats.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
     };
 
-    socket.on("conversation_updated", handleConversationUpdate);
+    const queueRefresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(loadConversations, 150);
+    };
 
+    loadConversations();
+    socket.on("conversation_updated", queueRefresh);
+    socket.on("connect", queueRefresh);
     return () => {
-      socket.off("conversation_updated", handleConversationUpdate);
+      clearTimeout(timer);
+      request?.abort();
+      socket.off("conversation_updated", queueRefresh);
+      socket.off("connect", queueRefresh);
     };
-  }, [loadConversations, loggedInUser?._id]);
+  }, [loggedInUser?._id]);
 
   return (
     <aside className="flex h-full w-full flex-col border-l border-white/10 bg-black text-white xl:w-72">

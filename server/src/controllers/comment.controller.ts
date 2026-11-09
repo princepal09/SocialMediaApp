@@ -5,7 +5,7 @@ import { Post } from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
-import { io } from "../index.js";
+import { io } from "../realtime.js";
 import { invalidatePostCaches } from "../utils/cache.js";
 
 export const createComment = async (req: Request, res: Response) => {

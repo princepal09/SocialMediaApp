@@ -11,7 +11,7 @@ import {
   updateBio,
   updateProfileImage,
 } from "../controllers/user.controller.js";
-import { upload } from "../middlewares/multer.middleware.js";
+import { uploadImage } from "../middlewares/multer.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -28,7 +28,7 @@ router.patch("/update-bio", verifyUser, updateBio);
 router.patch(
   "/update-profile",
   verifyUser,
-  upload.single("profileImage"),
+  uploadImage.single("profileImage"),
   updateProfileImage
 );
 router.get("/search", verifyUser, searchUser);

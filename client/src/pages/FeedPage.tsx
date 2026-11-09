@@ -1,100 +1,83 @@
-import { useSelector } from "react-redux";
-import { RootState } from "../store/store";
-import Spinner from "../components/general/Spinner";
+import { Camera, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getFeedPosts } from "../api/feed.api";
-import { toast } from "sonner";
 import FeedPost from "../components/FeedPageComponents/FeedPost";
-import { getSocket } from "../socket";
-import { FeedPostType } from "../types/feed";
+import Spinner from "../components/general/Spinner";
 import AppLayout from "../components/Layout/AppLayout";
+import { connectSocket } from "../socket";
+import type { FeedPostType } from "../types/feed";
 
 const FeedPage = () => {
-  const { loading } = useSelector((state: RootState) => state.auth);
-
-  const [feedPosts, setFeedPosts] = useState<FeedPostType[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-
-  useEffect(() => {
-    const getPosts = async () => {
-      setLoadingPosts(true);
-
-      try {
-        const response = await getFeedPosts();
-        setFeedPosts(response?.data || []);
-      } catch (err: any) {
-        toast.error(err?.message || "Failed to load feed");
-      } finally {
-        setLoadingPosts(false);
-      }
-    };
-
-    getPosts();
-  }, []);
+  const [posts, setPosts] = useState<FeedPostType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    const socket = getSocket();
-
-    if (!socket) return;
-
-    const handleNewPost = (newPost: FeedPostType) => {
-      setFeedPosts((prev) => {
-        if (prev.some((p) => p._id === newPost._id)) {
-          return prev;
-        }
-
-        return [newPost, ...prev];
+    let active = true;
+    getFeedPosts()
+      .then(({ data }) => {
+        if (active) setPosts(data ?? []);
+      })
+      .catch((err: { message?: string }) => {
+        if (active) setError(err.message || "The feed is temporarily unavailable.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
-    };
 
-    socket.on("new_post", handleNewPost);
+    return () => { active = false; };
+  }, [attempt]);
 
-    return () => {
-      socket.off("new_post", handleNewPost);
+  useEffect(() => {
+    const socket = connectSocket();
+    const addPost = (post: FeedPostType) => {
+      setPosts((current) => current.some(({ _id }) => _id === post._id) ? current : [post, ...current]);
     };
+    socket.on("new_post", addPost);
+    return () => { socket.off("new_post", addPost); };
   }, []);
 
-  if (loading) {
-    return <Spinner />;
-  }
+  const retry = () => {
+    setError("");
+    setLoading(true);
+    setAttempt((current) => current + 1);
+  };
 
   return (
     <AppLayout>
-      <div className="min-h-full w-full bg-black">
-        <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 md:px-8 lg:px-10 xl:px-12">
-          {/* Feed Header */}
-          <div className="mb-6 flex items-end justify-between sm:mb-8">
+      <div className="min-h-full bg-[#101017]">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-7 sm:py-9">
+          <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-5">
             <div>
-             
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8c6ff]">Community</p>
+              <h1 className="mt-1 text-3xl font-bold tracking-tight">Your feed</h1>
+              <p className="mt-1 text-sm text-zinc-400">See what people are making and sharing.</p>
             </div>
-          </div>
+            <Link to="/upload-post" className="inline-flex items-center gap-1.5 rounded-full bg-[#d8c6ff] px-4 py-2.5 text-sm font-semibold text-[#211333] hover:bg-[#eadfff]">
+              <Plus size={17} aria-hidden="true" /> New post
+            </Link>
+          </header>
 
-          {loadingPosts ? (
-            <div className="flex min-h-[60vh] items-center justify-center">
-              <Spinner />
-            </div>
-          ) : feedPosts.length === 0 ? (
-            <div className="flex min-h-[60vh] items-center justify-center">
-              <div className="w-full max-w-md rounded-3xl border border-black/10 bg-black px-6 py-14 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-2xl">
-                  📷
-                </div>
-
-                <h2 className="text-lg font-semibold text-white">
-                  No posts yet
-                </h2>
-
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-                  When people start sharing, their posts will appear here.
-                </p>
-              </div>
-            </div>
+          {loading ? (
+            <div className="grid min-h-64 place-items-center" role="status" aria-label="Loading feed"><Spinner fullScreen={false} /></div>
+          ) : error ? (
+            <section className="rounded-2xl border border-white/10 bg-[#191822] px-5 py-12 text-center" aria-live="polite">
+              <h2 className="text-lg font-semibold">Couldn’t load the feed</h2>
+              <p className="mt-2 text-sm text-zinc-400">{error}</p>
+              <button type="button" onClick={retry} className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
+                <RotateCcw size={15} aria-hidden="true" /> Try again
+              </button>
+            </section>
+          ) : posts.length ? (
+            <div className="space-y-5">{posts.map((post) => <FeedPost key={post._id} post={post} />)}</div>
           ) : (
-            <div className="mx-auto w-full max-w-5xl space-y-6 sm:space-y-8">
-              {feedPosts.map((feedPost) => (
-                <FeedPost key={feedPost._id} post={feedPost} />
-              ))}
-            </div>
+            <section className="rounded-2xl border border-white/10 bg-[#191822] px-5 py-12 text-center">
+              <Camera className="mx-auto mb-4 text-[#d8c6ff]" size={26} aria-hidden="true" />
+              <h2 className="text-lg font-semibold">No posts yet</h2>
+              <p className="mt-2 text-sm text-zinc-400">Share a photo, a video, or something you’re working on.</p>
+            </section>
           )}
         </div>
       </div>

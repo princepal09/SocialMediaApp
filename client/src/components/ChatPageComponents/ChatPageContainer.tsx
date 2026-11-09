@@ -24,11 +24,9 @@ const ChatPageContainer = () => {
   const {
     receiverId,
     username,
-    conversationId: routeConversationId,
   } = useParams<{
     receiverId: string;
     username: string;
-    conversationId: string;
   }>();
 
   const location = useLocation();
@@ -38,15 +36,14 @@ const ChatPageContainer = () => {
   const receiverName = receiver?.username || username || "User";
   const receiverProfileImage = receiver?.profileImage;
 
-  const [conversationId, setConversationId] = useState<string | null>(
-    routeConversationId || null,
-  );
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [sending, setSending] = useState(false);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
@@ -55,72 +52,46 @@ const ChatPageContainer = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const initChat = async () => {
+  useEffect(() => {
     if (!receiverId) return;
+    let active = true;
 
-    setLoading(true);
+    const loadConversation = async () => {
+      try {
+        const { data } = await getOrCreateConversations(receiverId);
+        if (!active) return;
+        const { data: history } = await getMessages(data._id);
+        if (!active) return;
+        setMessages([...history].reverse());
+        setConversationId(data._id);
+        void markSeen(data._id).catch(() => {});
+      } catch (err: any) {
+        if (active) setLoadError(err.message || "Failed to load messages.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
 
-    try {
-      const response = await getOrCreateConversations(receiverId);
-      const id = response.data._id;
-
-      setConversationId(id);
-
-      const msgs = await getMessages(id);
-
-      setMessages([...msgs.data].reverse());
-      await markSeen(response.data._id);
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to fetch messages");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-useEffect(() => {
-  if (!conversationId || !currentUser?._id) return;
-
-  const socket = connectSocket();
-
-  const handleNewMessage = async (data: {
-  conversationId: string;
-  message: Message;
-}) => {
-  // Ignore messages belonging to another conversation
-  if (data.conversationId !== conversationId) {
-    return;
-  }
-
-  const newMessage = data.message;
-
-  setMessages((prev) => {
-    const exists = prev.some(
-      (message) => message._id === newMessage._id
-    );
-
-    if (exists) {
-      return prev;
-    }
-
-    return [...prev, newMessage];
-  });
-
-  if (newMessage.sender?._id !== currentUser?._id) {
-    await markSeen(conversationId).catch(() => {});
-  }
-};
-
-  // Register listener
-  socket.on("new_message", handleNewMessage);
-
-  return () => {
-    socket.off("new_message", handleNewMessage);
-  };
-}, [conversationId, currentUser?._id]);
+    void loadConversation();
+    return () => { active = false; };
+  }, [receiverId]);
 
   useEffect(() => {
-    initChat();
-  }, [receiverId]);
+    if (!conversationId || !currentUser?._id) return;
+    const socket = connectSocket();
+
+    const handleNewMessage = (data: { conversationId: string; message: Message }) => {
+      if (data.conversationId !== conversationId) return;
+      const { message } = data;
+      setMessages((previous) => previous.some(({ _id }) => _id === message._id) ? previous : [...previous, message]);
+      if (message.sender?._id !== currentUser._id) {
+        void markSeen(conversationId).catch(() => {});
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+    return () => { socket.off("new_message", handleNewMessage); };
+  }, [conversationId, currentUser?._id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -242,6 +213,10 @@ useEffect(() => {
 
   const currentUserInitial =
     currentUser?.username?.charAt(0).toUpperCase() || "U";
+
+  if (loadError) {
+    return <p role="alert" className="p-8 text-center text-sm text-zinc-300">{loadError}</p>;
+  }
 
   if (loading) {
     return (
@@ -470,6 +445,7 @@ useEffect(() => {
             <input
               ref={inputRef}
               type="text"
+              maxLength={4000}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={handleKeyDown}

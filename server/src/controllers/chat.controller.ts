@@ -4,19 +4,25 @@ import { Message } from "../models/message.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
-import { io } from "../index.js";
+import { io } from "../realtime.js";
+import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 
 export const getOrCreateConversation = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     const { receiverId } = req.params;
 
-    if (!userId || !receiverId) {
-      throw new ApiError(404, "Invalid Users");
+    if (!userId || typeof receiverId !== "string" || !mongoose.isValidObjectId(receiverId)) {
+      throw new ApiError(400, "Invalid recipient.");
     }
 
     if (userId.toString() === receiverId.toString()) {
       throw new ApiError(400, "Cannot chat with yourself");
+    }
+
+    if (!(await User.exists({ _id: receiverId }))) {
+      throw new ApiError(404, "Recipient not found.");
     }
 
     const participants = [userId, receiverId].sort();
@@ -86,12 +92,13 @@ export const sendMessage = async (req: Request, res: Response) => {
       throw new ApiError(404, "Sender id not found");
     }
 
-    const { conversationId, text } = req.body;
-
-    const messageText = text?.trim();
-
-    if (!conversationId) {
-      throw new ApiError(404, "Conversation id not found");
+    const { conversationId, text } = req.body ?? {};
+    const messageText = typeof text === "string" ? text.trim() : "";
+    if (typeof conversationId !== "string" || !mongoose.isValidObjectId(conversationId)) {
+      throw new ApiError(400, "Invalid conversation.");
+    }
+    if ((!messageText && !req.file) || messageText.length > 4000) {
+      throw new ApiError(400, "Send an image or a message up to 4,000 characters.");
     }
 
     const conversation = await Conversation.findById(conversationId);
@@ -139,8 +146,6 @@ export const sendMessage = async (req: Request, res: Response) => {
     conversation.participants.forEach((participantId: any) => {
       const userRoom = participantId.toString();
 
-      console.log("📤 Emitting new_message to user room:", userRoom);
-
       io.to(userRoom).emit("new_message", socketPayload);
 
       io.to(userRoom).emit("conversation_updated");
@@ -173,8 +178,8 @@ export const getMessages = async (req: Request, res: Response) => {
     const userId = req.user?._id;
 
     const { conversationId } = req.params;
-    if (!conversationId) {
-      throw new ApiError(404, "Conversationid not found");
+    if (typeof conversationId !== "string" || !mongoose.isValidObjectId(conversationId)) {
+      throw new ApiError(400, "Invalid conversation.");
     }
 
     const conversation = await Conversation.findById(conversationId);
@@ -186,6 +191,9 @@ export const getMessages = async (req: Request, res: Response) => {
       throw new ApiError(403, "Not Authorized");
     }
     const page = Number(req.query.page) || 1;
+    if (!Number.isSafeInteger(page) || page < 1 || page > 1000) {
+      throw new ApiError(400, "Invalid message page.");
+    }
     const limit = 20;
     const skip = (page - 1) * limit;
 
@@ -223,8 +231,11 @@ export const markSeen = async (req: Request, res: Response) => {
       throw new ApiError(404, "User Id not found");
     }
 
-    if (!conversationId) {
-      throw new ApiError(404, "Conversation id not found");
+    if (typeof conversationId !== "string" || !mongoose.isValidObjectId(conversationId)) {
+      throw new ApiError(400, "Invalid conversation.");
+    }
+    if (!(await Conversation.exists({ _id: conversationId, participants: userId }))) {
+      throw new ApiError(404, "Conversation not found.");
     }
     await Message.updateMany(
       { conversation: conversationId, seenBy: { $ne: userId } },

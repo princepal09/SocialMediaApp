@@ -38,7 +38,7 @@ const AppLayout = ({
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-black text-white">
+    <div className="flex h-dvh flex-col overflow-hidden bg-black text-white">
       {/* ================= NAVBAR ================= */}
       <Navbar />
 

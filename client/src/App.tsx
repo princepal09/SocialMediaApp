@@ -3,20 +3,22 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
 import { setLogout, setUser } from "./store/slices/authSlice";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
-import FeedPage from "./pages/FeedPage";
-import ProfilePage from "./pages/ProfilePage";
 import ErrorPage from "./pages/ErrorPage";
-import UploadPostPage from "./pages/UploadPostPage";
-import EditPostPage from "./pages/EditPostPage";
-import ChatPage from "./pages/ChatPage";
+import Spinner from "./components/general/Spinner";
 import { RootState } from "./store/store";
 import { connectSocket, disconnectSocket } from "./socket";
 import { toast } from "sonner";
+
+const FeedPage = lazy(() => import("./pages/FeedPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const UploadPostPage = lazy(() => import("./pages/UploadPostPage"));
+const EditPostPage = lazy(() => import("./pages/EditPostPage"));
+const ChatPage = lazy(() => import("./pages/ChatPage"));
 
 const App = () => {
   const dispatch = useDispatch();
@@ -47,6 +49,7 @@ const App = () => {
   return (
     <>
       <div className="min-h-screen w-full overflow-x-hidden bg-[#000000]">
+        <Suspense fallback={<Spinner text="Loading Pixora…" />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route
@@ -110,6 +113,7 @@ const App = () => {
           {/* 404 Route - Keep this last */}
           <Route path="*" element={<ErrorPage />} />
         </Routes>
+        </Suspense>
       </div>
     </>
   );

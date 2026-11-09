@@ -10,7 +10,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import sanitizeHtml from "sanitize-html";
-import { io } from "../index.js";
+import { io } from "../realtime.js";
 import { redisClient } from "../config/redis.js";
 import { invalidatePostCaches } from "../utils/cache.js";
 
@@ -55,6 +55,9 @@ export const createPost = async (req: Request, res: Response) => {
 
     // Upload image
     if (hasImage && files.image?.[0]?.path) {
+      if (files.image[0].size > 5 * 1024 * 1024) {
+        throw new ApiError(413, "Images must be 5 MB or smaller.");
+      }
       const imageResult = await uploadToCloudinary(files.image[0].path);
 
       imageUrl = imageResult?.secure_url;
@@ -131,8 +134,7 @@ export const createPost = async (req: Request, res: Response) => {
 
     io.emit("new_post", formattedPost);
 
-    await redisClient.del("home:posts");
-    await redisClient.del(`user:posts:${user.username}`);
+    await invalidatePostCaches(user.username);
 
     return res
       .status(201)

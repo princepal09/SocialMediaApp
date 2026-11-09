@@ -11,12 +11,25 @@ import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import type { CookieOptions } from "express";
-import { io } from "../index.js";
+import { io } from "../realtime.js";
 
+const production = env.NODE_ENV === "production";
+const crossSite = production && process.env.COOKIE_CROSS_SITE !== "false";
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: env.NODE_ENV === "production",
-  sameSite: "lax",
+  secure: production,
+  sameSite: crossSite ? "none" : "lax",
+  partitioned: crossSite,
+};
+
+const sessionCookies = (res: Response, accessToken: string, refreshToken: string) => {
+  if (crossSite) {
+    // Clear unpartitioned cookies left by older deployments.
+    res.clearCookie("accessToken", { ...cookieOptions, partitioned: false });
+    res.clearCookie("refreshToken", { ...cookieOptions, partitioned: false });
+  }
+  return res.cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions);
 };
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -61,18 +74,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
     await User.updateOne({ _id: createdUser._id }, { $set: { refreshToken } });
 
-    const isProduction = env.NODE_ENV === "production";
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    };
-
-    return res
+    return sessionCookies(res, accessToken, refreshToken)
       .status(201)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
       .json(
         new ApiResponse(
           201,
@@ -131,17 +134,7 @@ export const loginUser = async (req: Request, res: Response) => {
       "-password -refreshToken"
     );
 
-    const isProduction = env.NODE_ENV === "production";
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    };
-
-    return res
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+    return sessionCookies(res, accessToken, refreshToken)
       .status(200)
       .json(
         new ApiResponse(
@@ -178,13 +171,10 @@ export const logoutUser = async (req: Request, res: Response) => {
     await User.updateOne({ _id: userId }, { $unset: { refreshToken: 1 } });
     if (userId) io.in(userId.toString()).disconnectSockets(true);
 
-    const isProduction = env.NODE_ENV === "production";
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    };
+    if (crossSite) {
+      res.clearCookie("accessToken", { ...cookieOptions, partitioned: false });
+      res.clearCookie("refreshToken", { ...cookieOptions, partitioned: false });
+    }
 
     return res
       .status(200)
@@ -213,8 +203,7 @@ export const logoutUser = async (req: Request, res: Response) => {
 
 export const refreshAccessToken = async (req: Request, res: Response) => {
   try {
-    const incomingRefreshToken =
-      req.cookies?.refreshToken;
+    const incomingRefreshToken = req.cookies?.refreshToken;
 
     if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized Request");
@@ -245,17 +234,8 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     );
     if (!result.matchedCount) throw new ApiError(401, "Session has expired.");
 
-    const isProduction = env.NODE_ENV === "production";
-
-    const cookieOptions: CookieOptions = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    };
-    return res
+    return sessionCookies(res, newAccessToken, newRefreshToken)
       .status(201)
-      .cookie("accessToken", newAccessToken, cookieOptions)
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
       .json(
         new ApiResponse(
           201,
@@ -472,7 +452,7 @@ export const updateProfileImage = async (req: Request, res: Response) => {
 
     if (!user.profileImage) {
       const profileImage = await uploadToCloudinary(profileImagePath);
-      user.profileImage = profileImage?.secure_url;
+      user.profileImage = profileImage.secure_url;
       await user.save({ validateBeforeSave: false });
       return res
         .status(201)
@@ -846,14 +826,16 @@ export const searchUser = async (req: Request, res: Response) => {
       throw new ApiError(400, "Search query is required");
     }
 
-    const currentUserId = (req as any).user?._id;
+    const currentUserId = req.user?._id;
+    const search = query.trim().slice(0, 80);
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const users = await User.find({
       $and: [
         {
           $or: [
-            { username: { $regex: query, $options: "i" } },
-            { bio: { $regex: query, $options: "i" } },
+            { username: { $regex: escapedSearch, $options: "i" } },
+            { bio: { $regex: escapedSearch, $options: "i" } },
           ],
         },
         {

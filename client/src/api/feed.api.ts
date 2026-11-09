@@ -7,8 +7,8 @@ export const getFeedPosts = async() =>{
     return response?.data
 }
 
-export const searchUsers = async(query:string) => {
-    const response = await api.get(`/users/search?query=${query}`);
+export const searchUsers = async(query:string, signal: AbortSignal) => {
+    const response = await api.get("/users/search", { params: { query }, signal });
     return response.data
 
 }

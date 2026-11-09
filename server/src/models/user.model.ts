@@ -1,4 +1,5 @@
-import mongoose, { mongo, Mongoose } from "mongoose";
+import { randomUUID } from "node:crypto";
+import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { IUser } from "../types/model.js";
@@ -101,6 +102,7 @@ userSchema.methods.generateRefreshToken = function () {
     env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: env.REFRESH_TOKEN_EXPIRY as StringValue,
+      jwtid: randomUUID(),
     }
   );
 };

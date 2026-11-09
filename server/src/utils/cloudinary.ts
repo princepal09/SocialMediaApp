@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 import { env } from "../constants.js";
-import { format } from "path";
+import { ApiError } from "./ApiError.js";
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY.CLOUD_NAME,
@@ -11,51 +10,30 @@ cloudinary.config({
 
 export const uploadToCloudinary = async (localFilePath: string) => {
   try {
-    console.log(localFilePath);
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-    });
-    // console.log("File is uploaded on cloudinary", response.secure_url)
-    fs.unlinkSync(localFilePath);
-    return response;
-  } catch (err) {
-    console.log("Cloudinary error", err);
-    fs.unlinkSync(localFilePath);
+    return await cloudinary.uploader.upload(localFilePath, { resource_type: "image" });
+  } catch {
+    throw new ApiError(502, "Image upload failed. Check the file or try again.");
   }
 };
 
 export const uploadVideoToCloudinary = async (localFilePath: string) => {
   try {
-    const response = await cloudinary.uploader.upload(localFilePath, {
+    return await cloudinary.uploader.upload(localFilePath, {
       resource_type: "video",
-      eager: [
-        {
-          streaming_profile: "full_hd",
-          format: "m3u8",
-        },
-      ],
+      eager: [{ streaming_profile: "full_hd", format: "m3u8" }],
       eager_async: false,
     });
-    fs.unlinkSync(localFilePath);
-    return response;
-  } catch (err: any) {
-    console.log("Cloudinary error", err);
-    fs.unlinkSync(localFilePath);
+  } catch {
+    throw new ApiError(502, "Video upload failed. Check the file or try again.");
   }
 };
 
 export const removeFromCloudinary = async (imageUrl: string) => {
   try {
-    const urlArray = imageUrl.split("/");
-    const imageNameWithExtension = urlArray[urlArray.length - 1];
-
-    const imageNameArray = imageNameWithExtension?.split(".");
-    const imageName: string | undefined = imageNameArray?.[0];
-
-    if (imageName) {
-      await cloudinary.uploader.destroy(imageName);
-    }
-  } catch (err) {
-    console.log("Cloudinary error", err);
+    const fileName = new URL(imageUrl).pathname.split("/").pop();
+    const publicId = fileName?.slice(0, fileName.lastIndexOf("."));
+    if (publicId) await cloudinary.uploader.destroy(publicId);
+  } catch {
+    console.error("Could not remove the image from Cloudinary.");
   }
 };

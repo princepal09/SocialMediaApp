@@ -33,24 +33,30 @@ const Navbar = () => {
       return;
     }
 
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
 
       try {
-        const res = await searchUsers(query.trim());
+        const res = await searchUsers(query.trim(), controller.signal);
 
+        if (controller.signal.aborted) return;
         setResults(res.data || []);
         setOpen(true);
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("Search error", err);
         setResults([]);
         setOpen(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
 
   // ================= CLICK OUTSIDE =================

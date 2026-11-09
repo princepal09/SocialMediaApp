@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import Hls from "hls.js";
+import type Hls from "hls.js";
 
 interface HlsVideoPlayerProps {
   src?: string;
@@ -15,20 +15,23 @@ const HlsVideoPlayer = ({ src, className }: HlsVideoPlayerProps) => {
     if (!video || !src) return;
 
     let hls: Hls | null = null;
+    let active = true;
 
-    if (Hls.isSupported()) {
-      hls = new Hls();
-
-      hls.loadSource(src);
-      hls.attachMedia(video);
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // Native HLS support (Safari/iOS)
+    if (!src.includes(".m3u8") || video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = src;
     } else {
-      console.error("HLS is not supported in this browser");
+      void import("hls.js").then(({ default: HlsPlayer }) => {
+        if (!active || !HlsPlayer.isSupported()) return;
+        hls = new HlsPlayer();
+        hls.loadSource(src);
+        hls.attachMedia(video);
+      }).catch(() => {
+        if (active) video.src = src;
+      });
     }
 
     return () => {
+      active = false;
       if (hls) {
         hls.destroy();
       }

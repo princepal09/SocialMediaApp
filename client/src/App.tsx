@@ -1,6 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import RegisterPage from "./pages/RegisterPage";
-import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
 import { useDispatch, useSelector } from "react-redux";
 import { lazy, Suspense, useEffect } from "react";
@@ -15,6 +13,8 @@ import { connectSocket, disconnectSocket } from "./socket";
 import { toast } from "sonner";
 
 const FeedPage = lazy(() => import("./pages/FeedPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const UploadPostPage = lazy(() => import("./pages/UploadPostPage"));
 const EditPostPage = lazy(() => import("./pages/EditPostPage"));

@@ -14,6 +14,7 @@ import Spinner from "../general/Spinner";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Send, Image as ImageIcon, X, LoaderCircle } from "lucide-react";
+import ChatSkeleton from "./ChatSkeleton";
 
 function mergeMessages(current: Message[], incoming: Message[]) {
   const merged = new Map(current.map((message) => [message._id, message]));
@@ -240,12 +241,8 @@ const ChatPageContainer = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center bg-black">
-        <Spinner />
-      </div>
-    );
-  }
+  return <ChatSkeleton />;
+}
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-black text-white">

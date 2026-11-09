@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema<IUser>(
     password: {
       type: String,
       required: true,
+      select: false,
     },
     followers: [
       {
@@ -73,7 +74,6 @@ userSchema.pre("save", async function () {
 });
 
 userSchema.methods.isPasswordCorrect = async function (password: string) {
-  console.log(password, this.password);
   return await bcrypt.compare(password, this.password);
 };
 

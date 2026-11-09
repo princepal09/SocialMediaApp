@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Message } from "../../types/chat";
 import { toast } from "sonner";
-import { connectSocket, getSocket } from "../../socket";
+import { connectSocket } from "../../socket";
 
 import {
   getMessages,
@@ -80,25 +80,12 @@ const ChatPageContainer = () => {
 useEffect(() => {
   if (!conversationId || !currentUser?._id) return;
 
-  // Get existing socket or create/reconnect it
-  const socket =
-    getSocket() || connectSocket(currentUser._id);
-
-  const joinConversation = () => {
-    console.log(
-      "🟢 JOINING CONVERSATION:",
-      conversationId
-    );
-
-    socket.emit("join_conversation", conversationId);
-  };
+  const socket = connectSocket();
 
   const handleNewMessage = async (data: {
   conversationId: string;
   message: Message;
 }) => {
-  console.log("🔥 MESSAGE RECEIVED:", data);
-
   // Ignore messages belonging to another conversation
   if (data.conversationId !== conversationId) {
     return;
@@ -119,28 +106,15 @@ useEffect(() => {
   });
 
   if (newMessage.sender?._id !== currentUser?._id) {
-    await markSeen(conversationId);
+    await markSeen(conversationId).catch(() => {});
   }
 };
 
   // Register listener
   socket.on("new_message", handleNewMessage);
 
-  // If already connected, join immediately
-  if (socket.connected) {
-    joinConversation();
-  }
-
-  // If socket connects/reconnects later
-  socket.on("connect", joinConversation);
-
   return () => {
     socket.off("new_message", handleNewMessage);
-    socket.off("connect", joinConversation);
-
-    if (socket.connected) {
-      socket.emit("leave_conversation", conversationId);
-    }
   };
 }, [conversationId, currentUser?._id]);
 

@@ -38,8 +38,6 @@ const LoginUserForm = () => {
     try {
       const response = await loginUser(data);
 
-      console.log("Login Response", response);
-
       dispatch(setUser(response?.data?.user));
 
       toast.success(response?.message || "Welcome back!");
@@ -107,13 +105,6 @@ const LoginUserForm = () => {
             <span className="ml-1 text-red-400">*</span>
           </label>
 
-          {/* Change this route when you create forgot password page */}
-          <Link
-            to="/forgot-password"
-            className="text-xs font-medium text-[#b85cff] transition hover:text-[#d28cff] hover:underline sm:text-sm"
-          >
-            Forgot password?
-          </Link>
         </div>
 
         <div className="relative">

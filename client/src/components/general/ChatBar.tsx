@@ -6,7 +6,7 @@ import { NavLink } from "react-router-dom";
 import { Conversastion } from "../../types/chat";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
-import { connectSocket, getSocket } from "../../socket";
+import { connectSocket } from "../../socket";
 
 interface ChatBarProps {
   onConversationClick?: () => void;
@@ -37,7 +37,7 @@ const ChatBar = ({ onConversationClick }: ChatBarProps) => {
 
     if (!loggedInUser?._id) return;
 
-    const socket = getSocket() || connectSocket(loggedInUser._id);
+    const socket = connectSocket();
 
     const handleConversationUpdate = () => {
       console.log("🔄 Conversation updated");

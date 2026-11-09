@@ -1,57 +1,67 @@
+import { createServer } from "node:http";
+import { Server } from "socket.io";
 import { app } from "./app.js";
 import dbConnect from "./config/db.js";
-import http from "http";
-import { Server } from "socket.io";
-import { env } from "./constants.js";
 import { connectRedis } from "./config/redis.js";
+import { env } from "./constants.js";
+import { getAccessUser } from "./middlewares/auth.middleware.js";
 
-const PORT = env.PORT;
-
-const server = http.createServer(app);
+const server = createServer(app);
 
 export const io = new Server(server, {
-  cors: {
-    origin: env.CORS_ORIGIN,
-    credentials: true,
+  cors: { origin: env.CORS_ORIGINS, credentials: true },
+  allowRequest: (req, callback) => {
+    const origin = req.headers.origin;
+    callback(null, !origin || env.CORS_ORIGINS.includes(origin));
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  const userId = socket.handshake.query.userId as string;
-  if (userId) {
-    socket.join(userId);
-    console.log("User joined personal room ", userId);
+io.use(async (socket, next) => {
+  try {
+    const token = socket.request.headers.cookie?.match(/(?:^|;\s*)accessToken=([^;]+)/)?.[1];
+    const user = token ? await getAccessUser(token) : null;
+    if (user) {
+      socket.data.userId = user.id;
+      return next();
+    }
+  } catch {
+    // Reject invalid sessions without revealing token or database details.
   }
 
-  socket.on("join_conversation", (conversationId: string) => {
-    socket.join(conversationId);
-    console.log("User joined conversation:", conversationId);
-  });
-
-  socket.on("leave_conversation", (conversationId: string) => {
-    socket.leave(conversationId);
-    console.log(`Left room : ${conversationId}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected", socket.id);
-  });
+  next(new Error("Sign in to connect to Pixora."));
 });
 
-dbConnect()
-  .then(async() => {
-    await connectRedis();
-    server.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
+io.on("connection", (socket) => {
+  socket.join(socket.data.userId);
+});
 
-    server.on("error", (error) => {
-      console.error("Server Error", error);
-      process.exit(1);
-    });
-  })
-  .catch((err: any) => {
-    console.error("MongoDB connection failed:", err);
+async function start() {
+  const required = [
+    "MONGO_URI", "REDIS_URL", "ACCESS_TOKEN_SECRET", "ACCESS_TOKEN_EXPIRY",
+    "REFRESH_TOKEN_SECRET", "REFRESH_TOKEN_EXPIRY", "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET",
+  ];
+  const missing = required.filter((key) => !process.env[key]?.trim());
+  if (missing.length) throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+  if (env.ACCESS_TOKEN_SECRET === env.REFRESH_TOKEN_SECRET) {
+    throw new Error("Access and refresh tokens require separate secrets.");
+  }
+  if (env.NODE_ENV === "production" && !process.env.CORS_ORIGIN) {
+    throw new Error("Set CORS_ORIGIN to the public frontend origin.");
+  }
+
+  await Promise.all([dbConnect(), connectRedis()]);
+  server.listen(env.PORT, "0.0.0.0", () => {
+    console.info(`Pixora API listening on port ${env.PORT}`);
   });
+}
+
+server.on("error", (error) => {
+  console.error("Pixora could not start listening:", error.message);
+  process.exit(1);
+});
+
+start().catch((error: Error) => {
+  console.error("Pixora startup failed:", error.message);
+  process.exit(1);
+});

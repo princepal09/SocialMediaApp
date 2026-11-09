@@ -30,7 +30,7 @@ const authSlice = createSlice({
 
     setUser(state, action: PayloadAction<IUser  | null>) {
       state.user = action.payload;
-      state.isAuthenticated = true;
+      state.isAuthenticated = Boolean(action.payload);
       state.loading = false;
     },
 

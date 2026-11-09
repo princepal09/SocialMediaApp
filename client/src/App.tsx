@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
+import LandingPage from "./pages/LandingPage";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { getCurrentUser } from "./api/auth.api";
@@ -14,7 +15,7 @@ import UploadPostPage from "./pages/UploadPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import ChatPage from "./pages/ChatPage";
 import { RootState } from "./store/store";
-import { connectSocket } from "./socket";
+import { connectSocket, disconnectSocket } from "./socket";
 import { toast } from "sonner";
 
 const App = () => {
@@ -22,58 +23,24 @@ const App = () => {
 
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const loadCurrentUser = async () => {
-    try {
-      const response = await getCurrentUser();
-      dispatch(setUser(response?.data));
-    } catch (err: any) {
-      dispatch(setLogout());
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
-    loadCurrentUser();
+    getCurrentUser()
+      .then((response) => dispatch(setUser(response.data)))
+      .catch(() => dispatch(setLogout()));
   }, [dispatch]);
 
-  //Live notification
   useEffect(() => {
     if (!user?._id) return;
 
-    const socket = connectSocket(user._id);
+    const socket = connectSocket();
+    const showNotification = ({ message }: { message: string }) => toast.info(message);
+    const events = ["postLiked", "postComment", "userFollowed"];
 
-    const handlePostLiked = (data: any) => {
-      console.log("Like notification received", data);
-
-      toast.info(data?.message);
-    };
-
-    const handlePostComment = (data: any) => {
-      console.log("Comment notification received", data);
-
-      toast.info(data?.message);
-    };
-
-    const handleUserFollowed = (data: any) => {
-      console.log("Follow notification received", data);
-
-      toast.info(data?.message);
-    };
-
-    socket.on("postLiked", handlePostLiked);
-
-    socket.on("postComment", handlePostComment);
-
-    socket.on("userFollowed", handleUserFollowed);
+    events.forEach((event) => socket.on(event, showNotification));
 
     return () => {
-      socket.off("postLiked", handlePostLiked);
-
-      socket.off("postComment", handlePostComment);
-
-      socket.off("userFollowed", handleUserFollowed);
-
-      socket.disconnect();
+      events.forEach((event) => socket.off(event, showNotification));
+      disconnectSocket();
     };
   }, [user?._id]);
 
@@ -81,14 +48,7 @@ const App = () => {
     <>
       <div className="min-h-screen w-full overflow-x-hidden bg-[#000000]">
         <Routes>
-          <Route
-            path="/"
-            element={
-              <PublicRoute>
-                <RegisterPage />
-              </PublicRoute>
-            }
-          />
+          <Route path="/" element={<LandingPage />} />
           <Route
             path="/feed"
             element={

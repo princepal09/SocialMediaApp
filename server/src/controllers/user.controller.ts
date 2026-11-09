@@ -10,37 +10,30 @@ import { env } from "../constants.js";
 import { MyJwtPayload } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import fs from "fs";
 import type { CookieOptions } from "express";
 import { io } from "../index.js";
 
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: env.NODE_ENV === "production",
+  sameSite: "lax",
+};
+
 export const registerUser = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
-    if (!username || username === "") {
-      throw new ApiError(400, "username is required");
-    }
-    if (!email || email === "") {
-      throw new ApiError(400, "email is required");
-    }
-    if (!email.includes("@")) {
-      throw new ApiError(400, "invalid emaill");
-    }
-    if (!password || password === "") {
-      throw new ApiError(400, "password is required");
-    }
+    const { username: rawUsername, email: rawEmail, password } = req.body ?? {};
+    const username = typeof rawUsername === "string" ? rawUsername.trim() : "";
+    const email = typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
 
-    let profileImageLocalPath;
-    let profileImageUrl;
-    if (req.file?.path) {
-      profileImageLocalPath = req.file.path;
-      const cloudinaryResult = await uploadToCloudinary(profileImageLocalPath);
-      if (cloudinaryResult?.secure_url) {
-        profileImageUrl = cloudinaryResult.secure_url;
-      }
+    if (!/^[A-Za-z0-9_]{3,30}$/.test(username)) {
+      throw new ApiError(400, "Use 3–30 letters, numbers, or underscores for your username.");
     }
-
-    console.log("File is uploaded on cloudinary", profileImageUrl);
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ApiError(400, "Enter a valid email address.");
+    }
+    if (typeof password !== "string" || password.length < 8 || Buffer.byteLength(password) > 72) {
+      throw new ApiError(400, "Use a password with at least 8 characters and at most 72 bytes.");
+    }
 
     const existingUser = await User.findOne({
       $or: [{ username }, { email }],
@@ -49,25 +42,12 @@ export const registerUser = async (req: Request, res: Response) => {
     if (existingUser) {
       throw new ApiError(
         409,
-        "User with this email or username is already exisits"
+        "That email or username is already in use."
       );
     }
 
-    let user;
-    if (profileImageUrl) {
-      user = await User.create({
-        username,
-        email,
-        password,
-        profileImage: profileImageUrl,
-      });
-    } else {
-      user = await User.create({
-        username,
-        email,
-        password,
-      });
-    }
+    const profileImage = req.file ? (await uploadToCloudinary(req.file.path)).secure_url : undefined;
+    const user = await User.create({ username, email, password, profileImage });
 
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken"
@@ -79,8 +59,7 @@ export const registerUser = async (req: Request, res: Response) => {
     const accessToken = createdUser.generateAccessToken();
     const refreshToken = createdUser.generateRefreshToken();
 
-    createdUser.refreshToken = refreshToken;
-    await createdUser.save({ validateBeforeSave: false });
+    await User.updateOne({ _id: createdUser._id }, { $set: { refreshToken } });
 
     const isProduction = env.NODE_ENV === "production";
 
@@ -98,15 +77,16 @@ export const registerUser = async (req: Request, res: Response) => {
         new ApiResponse(
           201,
           {
-            success: true,
             user: createdUser,
-            accessToken,
-            refreshToken,
           },
           "User registered successfully!!"
         )
       );
   } catch (err: any) {
+    if (err?.code === 11000) {
+      return res.status(409).json({ success: false, message: "That email or username is already in use." });
+    }
+
     console.error(err);
 
     if (err instanceof ApiError) {
@@ -128,26 +108,17 @@ export const registerUser = async (req: Request, res: Response) => {
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { identifier, password } = req.body;
-    if (!identifier) {
-      throw new ApiError(400, "Username or email is required");
-    }
-
-    if (!password) {
-      throw new ApiError(400, "Password required");
+    const { identifier, password } = req.body ?? {};
+    if (typeof identifier !== "string" || typeof password !== "string" || !identifier.trim() || !password) {
+      throw new ApiError(400, "Enter your username or email and password.");
     }
 
     const user = await User.findOne({
-      $or: [{ email: identifier }, { username: identifier }],
-    });
+      $or: [{ email: identifier.trim().toLowerCase() }, { username: identifier.trim() }],
+    }).select("+password");
 
-    if (!user) {
-      throw new ApiError(404, "User not exists, Please SignUp First");
-    }
-
-    const isPwdValid = await user.isPasswordCorrect(password);
-    if (!isPwdValid) {
-      throw new ApiError(401, "Password is not valid");
+    if (!user || !(await user.isPasswordCorrect(password))) {
+      throw new ApiError(401, "Username, email, or password is incorrect.");
     }
 
     const accessToken = user.generateAccessToken();
@@ -177,8 +148,6 @@ export const loginUser = async (req: Request, res: Response) => {
           200,
           {
             user: loggedInUser,
-            accessToken,
-            refreshToken,
           },
           "Login Successfully"
         )
@@ -206,15 +175,8 @@ export const loginUser = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        $unset: {
-          refreshToken: 1,
-        },
-      },
-      { new: true }
-    );
+    await User.updateOne({ _id: userId }, { $unset: { refreshToken: 1 } });
+    if (userId) io.in(userId.toString()).disconnectSockets(true);
 
     const isProduction = env.NODE_ENV === "production";
 
@@ -252,7 +214,7 @@ export const logoutUser = async (req: Request, res: Response) => {
 export const refreshAccessToken = async (req: Request, res: Response) => {
   try {
     const incomingRefreshToken =
-      req.cookies.refreshToken || req.header("Auhtorization")?.split("")[1];
+      req.cookies?.refreshToken;
 
     if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized Request");
@@ -260,10 +222,11 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
     const decode = jwt.verify(
       incomingRefreshToken,
-      env.ACCESS_TOKEN_SECRET
+      env.REFRESH_TOKEN_SECRET,
+      { algorithms: ["HS256"] },
     ) as MyJwtPayload;
 
-    const user = await User.findById(decode._id);
+    const user = await User.findById(decode._id).select("+refreshToken");
 
     if (!user) {
       throw new ApiError(401, "Invalid refresh token");
@@ -276,8 +239,11 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     const newRefreshToken = user.generateRefreshToken();
     const newAccessToken = user.generateAccessToken();
 
-    user.refreshToken = newRefreshToken;
-    await user.save({ validateBeforeSave: false });
+    const result = await User.updateOne(
+      { _id: user._id, refreshToken: incomingRefreshToken },
+      { $set: { refreshToken: newRefreshToken } },
+    );
+    if (!result.matchedCount) throw new ApiError(401, "Session has expired.");
 
     const isProduction = env.NODE_ENV === "production";
 
@@ -293,12 +259,15 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
       .json(
         new ApiResponse(
           201,
-          { refreshToken: newRefreshToken, accessToken: newAccessToken },
+          null,
           "Refresh Token successfully created"
         )
       );
   } catch (err: any) {
-    console.error(err);
+    if (err instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ success: false, message: "Session has expired." });
+    }
+    if (!(err instanceof ApiError)) console.error(err);
 
     if (err instanceof ApiError) {
       return res.status(err.status).json({
@@ -354,12 +323,15 @@ export const changeCurrentPassword = async (req: Request, res: Response) => {
       throw new ApiError(400, "All passwords are required");
     }
 
+    if (typeof oldPassword !== "string" || typeof newPassword !== "string" || newPassword.length < 8 || Buffer.byteLength(newPassword) > 72) {
+      throw new ApiError(400, "Use a new password with at least 8 characters and at most 72 bytes.");
+    }
     if (confirmPassword !== newPassword) {
       throw new ApiError(401, "New password and confirm password do not match");
     }
 
     const userId = req.user?._id;
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("+password");
     if (!user) {
       throw new ApiError(401, "Unauthorized access");
     }
@@ -490,13 +462,11 @@ export const updateProfileImage = async (req: Request, res: Response) => {
 
     const userId = req.user?._id;
     if (!userId) {
-      fs.unlinkSync(profileImagePath);
       throw new ApiError(500, "User id not found");
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      fs.unlinkSync(profileImagePath);
       throw new ApiError(500, "User not found");
     }
 
@@ -509,10 +479,10 @@ export const updateProfileImage = async (req: Request, res: Response) => {
         .json(new ApiResponse(201, null, "Profile Image Added Successfully"));
     } else {
       const oldProfileImageUrl = user.profileImage;
-      await removeFromCloudinary(oldProfileImageUrl);
       const newProfileImage = await uploadToCloudinary(profileImagePath);
-      user.profileImage = newProfileImage?.secure_url;
+      user.profileImage = newProfileImage.secure_url;
       await user.save({ validateBeforeSave: false });
+      await removeFromCloudinary(oldProfileImageUrl);
 
       return res
         .status(201)

@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 export const env = {
-  PORT: process.env.PORT || 8001,
+  PORT: Number(process.env.PORT || 6001),
   MONGO_URI: process.env.MONGO_URI,
 
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
@@ -17,7 +17,7 @@ export const env = {
     API_SECRET: process.env.CLOUDINARY_API_SECRET,
   },
 
-  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  CORS_ORIGINS: (process.env.CORS_ORIGIN || "http://localhost:3001").split(",").map((origin) => origin.trim()),
   REDIS_URL:process.env.REDIS_URL,
   NODE_ENV:process.env.NODE_ENV
 };

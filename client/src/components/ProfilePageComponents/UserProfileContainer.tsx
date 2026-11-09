@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import UserInfo from "./UserInfo";
 import UserPosts from "./UserPosts";
-import Spinner from "../general/Spinner";
+import ProfileSkeleton from "./ProfileSkeleton";
 
 import {
   getUserProfileInfo,
@@ -30,14 +30,15 @@ const UserProfileContainer = () => {
   const [userProfileInfo, setUserProfileInfo] =
     useState<IUserProfileInfo | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [userPosts, setUserPosts] =
     useState<PostsResponse | null>(null);
 
   const [userPostLoading, setUserPostLoading] =
-    useState(false);
+    useState(true);
 
+  // FETCH USER PROFILE
   useEffect(() => {
     if (!username) return;
 
@@ -48,10 +49,14 @@ const UserProfileContainer = () => {
         const response = await getUserProfileInfo(username);
 
         setUserProfileInfo(response.data);
-      } catch (err: any) {
-        toast.error(
-          err.message || "Failed to fetch profile",
-        );
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch profile";
+
+        toast.error(message);
+        setUserProfileInfo(null);
       } finally {
         setLoading(false);
       }
@@ -60,6 +65,7 @@ const UserProfileContainer = () => {
     fetchProfile();
   }, [username]);
 
+  // FETCH USER POSTS
   useEffect(() => {
     if (!username) return;
 
@@ -70,10 +76,14 @@ const UserProfileContainer = () => {
         const response = await geUserPosts(username);
 
         setUserPosts(response.data);
-      } catch (err: any) {
-        toast.error(
-          err.message || "Failed to fetch posts",
-        );
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch posts";
+
+        toast.error(message);
+        setUserPosts(null);
       } finally {
         setUserPostLoading(false);
       }
@@ -82,6 +92,7 @@ const UserProfileContainer = () => {
     fetchPosts();
   }, [username]);
 
+  // DELETE POST FROM UI
   const handleDeletePostFromUi = (postId: string) => {
     setUserPosts((prev) =>
       prev
@@ -94,28 +105,42 @@ const UserProfileContainer = () => {
 
       return {
         ...prev,
-        postCount: Math.max(
-          0,
-          prev.postCount - 1,
-        ),
+        postCount: Math.max(0, prev.postCount - 1),
       };
     });
   };
 
+  // PROFILE LOADING SKELETON
   if (loading) {
-    return <Spinner />;
+    return (
+      <div className="h-full w-full overflow-x-hidden overflow-y-auto bg-[#101017]">
+        <div className="mx-auto w-full max-w-5xl px-3 py-6 sm:px-4 md:px-6 lg:px-8">
+          <ProfileSkeleton />
+        </div>
+      </div>
+    );
   }
 
+  // USER NOT FOUND
   if (!userProfileInfo) {
     return (
-      <div className="flex h-full w-full items-center justify-center px-4 text-center text-white">
-        User not found
+      <div className="flex h-full w-full items-center justify-center bg-[#101017] px-4 text-center text-white">
+        <div>
+          <h2 className="text-xl font-semibold">
+            User not found
+          </h2>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            This profile may not exist or is unavailable.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full overflow-x-hidden overflow-y-auto">
+    <div className="h-full w-full overflow-x-hidden overflow-y-auto bg-[#101017]">
+
       <div
         className="
           mx-auto
@@ -128,16 +153,18 @@ const UserProfileContainer = () => {
           lg:px-8
         "
       >
-        {/* USER INFO
-            Update Profile Image + Update Bio functionality
-            stays inside UserInfo
-        */}
+
+        {/* USER INFO */}
+        {/* Update Profile Image + Update Bio functionality */}
+        {/* stays inside UserInfo */}
+
         <UserInfo
           user={userProfileInfo}
           setUserProfileInfo={setUserProfileInfo}
         />
 
-        {/* CREATE POST - PRESERVED */}
+        {/* CREATE POST - ONLY FOR LOGGED-IN USER */}
+
         {loggedInUser?.username === username && (
           <div
             className="
@@ -192,16 +219,54 @@ const UserProfileContainer = () => {
         )}
 
         {/* USER POSTS */}
-        <div className="w-full">
+
+        <div className="mt-5 w-full">
+
           {userPostLoading ? (
-            <Spinner />
+
+            /* POSTS SKELETON */
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+
+              {[0, 1, 2, 3, 4, 5].map((item) => (
+                <div
+                  key={item}
+                  className="
+                    animate-pulse
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    border-white/10
+                    bg-[#191822]
+                  "
+                >
+                  {/* POST IMAGE */}
+
+                  <div className="aspect-square bg-white/5" />
+
+                  {/* POST DETAILS */}
+
+                  <div className="space-y-2 p-3">
+                    <div className="h-3 w-4/5 rounded-full bg-white/10" />
+
+                    <div className="h-2.5 w-2/5 rounded-full bg-white/5" />
+                  </div>
+                </div>
+              ))}
+
+            </div>
+
           ) : (
+
             <UserPosts
               onDeletePost={handleDeletePostFromUi}
               userPosts={userPosts}
             />
+
           )}
+
         </div>
+
       </div>
     </div>
   );

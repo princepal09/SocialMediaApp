@@ -1,18 +1,15 @@
-FROM node:22-alpine
-
+# Stage 1: Build the Vite/React application
+FROM node:22-alpine AS build
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy project files
+RUN npm ci
 COPY . .
+RUN npm run build
 
-# Vite development port
-EXPOSE 3001
-
-# Start Vite
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Stage 2: Serve static files using serve
+FROM node:22-alpine
+WORKDIR /app
+RUN npm i -g serve
+COPY --from=build /app/dist ./dist
+EXPOSE 3000
+CMD ["serve", "-s", "dist", "-l", "3000"]

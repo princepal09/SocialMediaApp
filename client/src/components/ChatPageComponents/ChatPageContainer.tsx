@@ -10,7 +10,6 @@ import {
   sendMessage,
   markSeen,
 } from "../../api/chat.api";
-import Spinner from "../general/Spinner";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { Send, Image as ImageIcon, X, LoaderCircle } from "lucide-react";

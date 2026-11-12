@@ -11,12 +11,19 @@ io.attach(server);
 
 async function start() {
   const required = [
-    "MONGO_URI", "REDIS_URL", "ACCESS_TOKEN_SECRET", "ACCESS_TOKEN_EXPIRY",
-    "REFRESH_TOKEN_SECRET", "REFRESH_TOKEN_EXPIRY", "CLOUDINARY_CLOUD_NAME",
-    "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET",
+    "MONGO_URI",
+    "REDIS_URL",
+    "ACCESS_TOKEN_SECRET",
+    "ACCESS_TOKEN_EXPIRY",
+    "REFRESH_TOKEN_SECRET",
+    "REFRESH_TOKEN_EXPIRY",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
   ];
   const missing = required.filter((key) => !process.env[key]?.trim());
-  if (missing.length) throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+  if (missing.length)
+    throw new Error(`Missing environment variables: ${missing.join(", ")}`);
   if (env.ACCESS_TOKEN_SECRET === env.REFRESH_TOKEN_SECRET) {
     throw new Error("Access and refresh tokens require separate secrets.");
   }

@@ -30,9 +30,15 @@ const App = () => {
     let active = true;
     void import("./api/auth.api")
       .then(({ getCurrentUser }) => getCurrentUser())
-      .then(({ data }) => { if (active) dispatch(setUser(data)); })
-      .catch(() => { if (active) dispatch(setLogout()); });
-    return () => { active = false; };
+      .then(({ data }) => {
+        if (active) dispatch(setUser(data));
+      })
+      .catch(() => {
+        if (active) dispatch(setLogout());
+      });
+    return () => {
+      active = false;
+    };
   }, [dispatch, shouldRestoreSession]);
 
   useEffect(() => {
@@ -40,19 +46,22 @@ const App = () => {
 
     let active = true;
     let stop: (() => void) | undefined;
-    const showNotification = ({ message }: { message: string }) => toast.info(message);
+    const showNotification = ({ message }: { message: string }) =>
+      toast.info(message);
     const events = ["postLiked", "postComment", "userFollowed"];
     const userId = user._id;
 
-    void import("./socket").then(({ socket, startRealtime }) => {
-      if (!active) return;
-      events.forEach((event) => socket.on(event, showNotification));
-      const disconnect = startRealtime(userId);
-      stop = () => {
-        events.forEach((event) => socket.off(event, showNotification));
-        disconnect();
-      };
-    }).catch(() => {});
+    void import("./socket")
+      .then(({ socket, startRealtime }) => {
+        if (!active) return;
+        events.forEach((event) => socket.on(event, showNotification));
+        const disconnect = startRealtime(userId);
+        stop = () => {
+          events.forEach((event) => socket.off(event, showNotification));
+          disconnect();
+        };
+      })
+      .catch(() => {});
 
     return () => {
       active = false;
@@ -65,14 +74,40 @@ const App = () => {
       <Suspense fallback={<Spinner text="Loading Pixora…" />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route path="/feed" element={<FeedPage />} />
             <Route path="/profile/:username" element={<ProfilePage />} />
             <Route path="/upload-post" element={<UploadPostPage />} />
-            <Route path="/profile/:username/post/edit/:postId" element={<EditPostPage />} />
-            <Route path="/chat/:username/rcid/:receiverId/cid/:conversationId" element={<ChatPage />} />
+            <Route
+              path="/profile/:username/post/edit/:postId"
+              element={<EditPostPage />}
+            />
+            <Route
+              path="/chat/:username/rcid/:receiverId/cid/:conversationId"
+              element={<ChatPage />}
+            />
           </Route>
           <Route path="*" element={<ErrorPage />} />
         </Routes>

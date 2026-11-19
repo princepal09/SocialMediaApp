@@ -3,14 +3,16 @@ services:
     image: mongo:7
     container_name: social_mongo_dev
     restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
       - mongo_dev_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"try { rs.status() } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}) }; quit(db.hello().isWritablePrimary ? 0 : 1)\""]
       interval: 10s
-      timeout: 5s
+      timeout: 15s
+      start_period: 30s
       retries: 5
 
   redis:
@@ -58,7 +60,8 @@ services:
     environment:
       PORT: 6001
       NODE_ENV: development
-      MONGO_URI: mongodb://mongo:27017/socialmedia
+      NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
+      MONGO_URI: mongodb://mongo:27017/socialmedia?replicaSet=rs0
       REDIS_URL: redis://redis:6379
     volumes:
       - ./server:/app

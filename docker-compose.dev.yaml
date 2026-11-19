@@ -1,0 +1,90 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: social_mongo_dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_dev_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: social_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express:1.0.2-20-alpine3.19
+    container_name: social_mongo_express_dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_BASICAUTH: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_BASICAUTH_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_BASICAUTH_PASS:-devpass123}
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: social_backend_dev
+    restart: unless-stopped
+    ports:
+      - "6001:6001"
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 6001
+      NODE_ENV: development
+      MONGO_URI: mongodb://mongo:27017/socialmedia
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: social_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      VITE_API_URL: http://localhost:6001
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  mongo_dev_data:
+  redis_dev_data:
